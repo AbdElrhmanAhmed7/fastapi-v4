@@ -1,0 +1,183 @@
+{
+  "id": "mars_arrival",
+  "stage": 3,
+  "title": {"en": "Mars Arrival & Exploration", "ar": "الوصول للمريخ والاستكشاف"},
+  "summary": {"en": "Leave the lander, survey the terrain, map hazards, pick a base site and raise comms.", "ar": "اخرج من مركبة الهبوط، امسح المنطقة، حدد المخاطر، اختار مكان القاعدة وارفع الاتصال."},
+  "environment": "mars_surface",
+  "estimated_minutes": 10,
+  "requires_missions": ["training_prep", "analog_emergency"],
+  "briefing": [
+    {"en": "Sol 1. Gravity 0.38 g, atmosphere 95% CO2 – your suit is your habitat.", "ar": "اليوم الأول. الجاذبية 0.38 من الأرض، الغلاف 95% ثاني أكسيد كربون – بدلتك هي بيتك."},
+    {"en": "Never pick a base site before mapping hazards.", "ar": "عمرك ما تختار مكان قاعدة قبل ما تحدد المخاطر."},
+    {"en": "Watch the oxygen gauge: EVA burns it far faster than the habitat.", "ar": "راقب الأكسجين: الخروج الفضائي بيستهلكه أسرع بكتير من القاعدة."}
+  ],
+  "objectives": [
+    {
+      "id": "exit_lander",
+      "title": {"en": "Exit the lander", "ar": "اخرج من مركبة الهبوط"},
+      "hint": {"en": "Cycle the hatch and climb down the ladder.", "ar": "افتح الباب وانزل السلم."},
+      "target": "lander_hatch",
+      "animation": "climb_down",
+      "duration_ms": 3000,
+      "requires": [{"type": "mission", "id": "analog_emergency", "status": "completed"}],
+      "effects": {"world": {"mars.on_surface": true}, "flags_set": ["mars.landed"], "resources": {"oxygen": -2}},
+      "score": 10,
+      "success_message": {"en": "Boots on regolith. Welcome to Mars.", "ar": "قدمك على تربة المريخ. أهلًا بيك."}
+    },
+    {
+      "id": "survey_area",
+      "title": {"en": "Survey the landing zone", "ar": "امسح منطقة الهبوط"},
+      "hint": {"en": "Walk a 50 m arc and scan the terrain.", "ar": "امشي قوس 50 متر وامسح التضاريس."},
+      "target": "landing_zone",
+      "animation": "scan",
+      "duration_ms": 2600,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "objective", "id": "exit_lander"}],
+      "effects": {"world": {"mars.surveyed": true}, "resources": {"power": -3}, "equipment_wear": {"scanner": 5}, "stats": {"distance_metres": 120.0}},
+      "score": 14
+    },
+    {
+      "id": "map_hazards",
+      "title": {"en": "Map terrain hazards", "ar": "حدد مخاطر التضاريس"},
+      "hint": {"en": "Tag boulder fields, soft sand and the crater rim.", "ar": "علّم حقول الصخور والرمل الناعم وحافة الفوهة."},
+      "target": "hazard_ridge",
+      "animation": "scan",
+      "duration_ms": 2800,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "objective", "id": "survey_area"}],
+      "payload": [{"name": "radius", "type": "integer", "minimum": 50, "maximum": 500, "default": 150, "label": {"en": "Survey radius (m)", "ar": "نصف قطر المسح (م)"}}],
+      "effects": {"world": {"mars.hazards_mapped": true, "mars.survey_radius": "{{payload.radius}}"}, "flags_set": ["mars.hazards_mapped"], "resources": {"power": -3}, "equipment_wear": {"scanner": 4}},
+      "score": 14,
+      "success_message": {"en": "Hazard map written to your HUD.", "ar": "خريطة المخاطر اتكتبت على شاشتك."}
+    },
+    {
+      "id": "unload_cargo",
+      "title": {"en": "Unload the science cargo", "ar": "نزّل الحمولة العلمية"},
+      "hint": {"en": "Lander cargo bay: drill, spectrometer, dosimeter, containers.", "ar": "عنبر الحمولة: مثقاب، مطياف، مقياس إشعاع، حاويات."},
+      "target": "cargo_bay",
+      "animation": "pickup",
+      "duration_ms": 2000,
+      "require_previous": false,
+      "requires": [{"type": "objective", "id": "exit_lander"}],
+      "effects": {"items": {"core_drill": 1, "spectrometer": 1, "dosimeter": 1, "sample_container": 3, "geology_map": 1, "antenna_kit": 1}},
+      "score": 8
+    },
+    {
+      "id": "measure_radiation",
+      "title": {"en": "Measure surface radiation", "ar": "قيس الإشعاع على السطح"},
+      "hint": {"en": "Use the dosimeter for a 60-second sample.", "ar": "استخدم مقياس الإشعاع لعينة 60 ثانية."},
+      "target": "landing_zone",
+      "animation": "measure",
+      "duration_ms": 2400,
+      "requires": [{"type": "item", "id": "dosimeter"}, {"type": "objective", "id": "map_hazards"}],
+      "effects": {"world": {"mars.radiation_msv_per_day": 0.67}, "flags_set": ["mars.radiation_checked"], "equipment_wear": {"dosimeter": 1}},
+      "score": 12,
+      "science_note": "Curiosity's RAD measured roughly 0.67 mSv/day on the Martian surface – about the order of magnitude used here."
+    },
+    {
+      "id": "select_base_site",
+      "title": {"en": "Select the base site", "ar": "اختار مكان القاعدة"},
+      "hint": {"en": "Choose a flat, sheltered, resource-close site.", "ar": "اختار مكان مستوي ومحمي وقريب من الموارد."},
+      "target": "site_marker",
+      "animation": "place_marker",
+      "duration_ms": 2000,
+      "requires": [{"type": "world", "path": "mars.hazards_mapped", "op": "eq", "value": true, "hint": {"en": "Map the hazards before choosing.", "ar": "حدد المخاطر قبل الاختيار."}}],
+      "payload": [{"name": "site", "type": "string", "choices": ["jezero_ridge", "delta_flats", "crater_rim"], "required": true, "label": {"en": "Candidate site", "ar": "الموقع المرشح"}}],
+      "effects": {"world": {"base_site": "{{payload.site}}", "mars.site_selected": true}, "flags_set": ["mars.site_selected"]},
+      "score": 14
+    },
+    {
+      "id": "deploy_antenna",
+      "title": {"en": "Deploy the comms antenna", "ar": "انشر هوائي الاتصال"},
+      "hint": {"en": "Point it at the orbiter and lock the link.", "ar": "وجّهه للمركبة المدارية واقفل الاتصال."},
+      "target": "antenna_mount",
+      "animation": "install",
+      "duration_ms": 3000,
+      "requires": [{"type": "item", "id": "antenna_kit"}, {"type": "objective", "id": "select_base_site"}],
+      "effects": {"items": {"antenna_kit": -1}, "world": {"comms_online": true}, "flags_set": ["comms_online"], "resources": {"power": -3}},
+      "score": 14,
+      "success_message": {"en": "Uplink established through the orbiter.", "ar": "تم الاتصال عبر المركبة المدارية."}
+    },
+    {
+      "id": "establish_base",
+      "title": {"en": "Establish the research base", "ar": "أنشئ قاعدة الأبحاث"},
+      "hint": {"en": "Anchor the habitat module and start the life-support loop.", "ar": "ثبّت وحدة السكن وشغّل دورة دعم الحياة."},
+      "target": "habitat_module",
+      "animation": "install",
+      "duration_ms": 3500,
+      "requires": [{"type": "flag", "id": "comms_online"}, {"type": "world", "path": "mars.site_selected", "op": "eq", "value": true}],
+      "effects": {"world": {"mars.base_established": true}, "flags_set": ["base_established"], "resources": {"power": 15, "water": 10}, "readiness": 3.0},
+      "score": 18,
+      "success_message": {"en": "Base online. Mars is now habitable – barely.", "ar": "القاعدة شغالة. المريخ بقى قابل للعيش – بالعافية."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "select_base_site",
+      "missing_any": ["mars.hazards_mapped"],
+      "effects": {"readiness": -5.0},
+      "message": {"en": "Choosing a site blind risks the entire base. Map the hazards first.", "ar": "اختيار موقع بدون مسح بيعرض القاعدة كلها للخطر. حدد المخاطر الأول."},
+      "mistake_penalty": 8.0
+    },
+    {
+      "action": "exit_lander",
+      "missing_any": ["analog_emergency"],
+      "effects": {},
+      "message": {"en": "You are not cleared for Mars. Finish Earth Analog training.", "ar": "مش مصرح لك بالمريخ. خلص التدريب الأرضي."},
+      "mistake_penalty": 2.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 5.0, "time_target_seconds": 600.0, "time_bonus_max": 10.0, "pass_score_pct": 60.0},
+  "completion": {
+    "effects": {"world": {"mars.arrival_done": true}},
+    "unlocks": ["mars_rover_traverse", "crew_health", "lunar_landing"],
+    "summary": {"en": "Base established. Long-range traverses and crew care are now available.", "ar": "القاعدة اتأسست. الرحلات الطويلة ورعاية الطاقم بقت متاحة."},
+    "continuity": [
+      {
+        "key": "arrival:oxygen",
+        "label": {"en": "EVA discipline → oxygen reserve", "ar": "انضباط الخروج ← احتياطي الأكسجين"},
+        "kind": "resource",
+        "metric": "resource_pct:oxygen",
+        "bands": [
+          {"min": 70, "value": 10, "reason": {"en": "Efficient EVA left a healthy oxygen margin.", "ar": "خروج فعال ترك هامش أكسجين جيد."}},
+          {"min": 35, "value": 0, "reason": {"en": "Average oxygen usage.", "ar": "استهلاك أكسجين متوسط."}},
+          {"min": 0, "value": -10, "reason": {"en": "Oxygen nearly exhausted during arrival.", "ar": "الأكسجين قرب يخلص وقت الوصول."}}
+        ]
+      },
+      {
+        "key": "site_quality",
+        "label": {"en": "Site selection → base stability", "ar": "اختيار الموقع ← استقرار القاعدة"},
+        "kind": "hazard",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 80, "value": 0, "reason": {"en": "Well-chosen site: no terrain penalty.", "ar": "موقع مختار صح: مفيش عقوبة تضاريس."}},
+          {"min": 0, "value": 1, "reason": {"en": "Rushed site selection: unstable ground flagged for later stages.", "ar": "اختيار متسرع: أرض غير مستقرة هتأثر بعدين."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Radiation on the Martian surface", "ar": "الإشعاع على سطح المريخ"},
+      "detail": {"en": "Curiosity's Radiation Assessment Detector measured about 0.67 millisieverts per day on the surface – far above Earth's background, which drives habitat shielding design.", "ar": "مقياس الإشعاع على كيوريوسيتي قاس حوالي 0.67 مللي سيفرت يوميًا على السطح – أعلى بكتير من خلفية الأرض، وده بيحدد تصميم تدريع القاعدة."},
+      "source": "NASA/JPL – Curiosity RAD results (Hassler et al., Science 2014)",
+      "url": "https://mars.nasa.gov/msl/mission/instruments/rad/",
+      "simulated": false
+    },
+    {
+      "topic": {"en": "Landing-site selection", "ar": "اختيار موقع الهبوط"},
+      "detail": {"en": "Real sites are chosen for engineering safety (slope, rocks, elevation) and science value; Jezero Crater was selected for its ancient river delta.", "ar": "المواقع الحقيقية بتتختار لأمان هندسي (الميل، الصخور، الارتفاع) وقيمة علمية؛ فوهة جيزيرو اتختارت لدلتا النهر القديمة."},
+      "source": "NASA – Mars 2020 Perseverance landing site",
+      "url": "https://science.nasa.gov/mission/mars-2020-perseverance/landing-site/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "lander_hatch", "label": {"en": "Lander Hatch", "ar": "باب مركبة الهبوط"}, "kind": "door", "position": [0, 1.5, 0], "interactions": ["exit_lander"]},
+    {"id": "cargo_bay", "label": {"en": "Cargo Bay", "ar": "عنبر الحمولة"}, "kind": "locker", "position": [2.5, 0.6, 1.5], "interactions": ["unload_cargo"]},
+    {"id": "landing_zone", "label": {"en": "Landing Zone", "ar": "منطقة الهبوط"}, "kind": "area", "position": [12, 0, 8], "interactions": ["survey_area", "measure_radiation"]},
+    {"id": "hazard_ridge", "label": {"en": "Hazard Ridge", "ar": "حافة المخاطر"}, "kind": "area", "position": [-25, 2, 18], "interactions": ["map_hazards"]},
+    {"id": "site_marker", "label": {"en": "Base Site Marker", "ar": "علامة موقع القاعدة"}, "kind": "marker", "position": [30, 0, -12], "interactions": ["select_base_site"]},
+    {"id": "antenna_mount", "label": {"en": "Antenna Mount", "ar": "قاعدة الهوائي"}, "kind": "structure", "position": [32, 0, -10], "interactions": ["deploy_antenna"]},
+    {"id": "habitat_module", "label": {"en": "Habitat Module", "ar": "وحدة السكن"}, "kind": "structure", "position": [34, 0, -14], "interactions": ["establish_base"]}
+  ],
+  "disclaimer": "Educational game simulation. Distances, resources and radiation values are simplified."
+}

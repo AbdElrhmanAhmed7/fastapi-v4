@@ -1,0 +1,157 @@
+{
+  "id": "analog_device_fault",
+  "stage": 2,
+  "title": {"en": "Faulty Science Device", "ar": "عطل في جهاز علمي"},
+  "summary": {"en": "Find the fault, measure it, cool the unit, replace the board and calibrate.", "ar": "لاقي العطل، قيسه، برّد الوحدة، بدل اللوحة وعاير الجهاز."},
+  "environment": "earth_analog",
+  "estimated_minutes": 7,
+  "requires_missions": ["analog_systems_check"],
+  "briefing": [
+    {"en": "A hot board kills the replacement. Cool it before you touch it.", "ar": "اللوحة السخنة بتبوظ البديل. برّدها قبل ما تلمسها."},
+    {"en": "Tools wear out. A worn multimeter gives readings you cannot trust.", "ar": "الأدوات بتتآكل. الملتيميتر المتهالك بيدي قراءات مش موثوقة."}
+  ],
+  "objectives": [
+    {
+      "id": "scan_device",
+      "title": {"en": "Scan the atmosphere analyser", "ar": "امسح محلل الغلاف الجوي"},
+      "hint": {"en": "Science bench: find the hot spot.", "ar": "منضدة العلوم: لاقي النقطة السخنة."},
+      "target": "atmosphere_analyser",
+      "animation": "scan",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "scanner"}],
+      "effects": {"world": {"device.fault_found": true}, "resources": {"power": -2}, "equipment_wear": {"scanner": 4}},
+      "score": 12,
+      "success_message": {"en": "Regulator board running 30 C above nominal.", "ar": "لوحة المنظم سخنة 30 درجة فوق الطبيعي."}
+    },
+    {
+      "id": "measure_circuit",
+      "title": {"en": "Measure the regulator circuit", "ar": "قيس دائرة المنظم"},
+      "hint": {"en": "Record the rail voltage in the log.", "ar": "سجل جهد الخط في السجل."},
+      "target": "atmosphere_analyser",
+      "animation": "measure",
+      "duration_ms": 1600,
+      "requires": [{"type": "item", "id": "multimeter"}, {"type": "objective", "id": "scan_device"}],
+      "payload": [
+        {"name": "voltage", "type": "number", "minimum": 0, "maximum": 48, "default": 24.0, "label": {"en": "Measured rail voltage", "ar": "الجهد المقاس"}}
+      ],
+      "effects": {"world": {"device.measured": true, "device.voltage": "{{payload.voltage}}"}, "equipment_wear": {"multimeter": 3}},
+      "score": 12
+    },
+    {
+      "id": "take_coolant",
+      "title": {"en": "Take a coolant canister", "ar": "خد عبوة تبريد"},
+      "hint": {"en": "Stores: coolant shelf.", "ar": "المخزن: رف التبريد."},
+      "target": "stores_locker",
+      "animation": "pickup",
+      "duration_ms": 1200,
+      "require_previous": false,
+      "effects": {"items": {"coolant_canister": 1}},
+      "score": 6
+    },
+    {
+      "id": "cool_unit",
+      "title": {"en": "Cool the unit down", "ar": "برّد الوحدة"},
+      "hint": {"en": "Use the coolant canister on the regulator.", "ar": "استخدم عبوة التبريد على المنظم."},
+      "target": "atmosphere_analyser",
+      "animation": "spray",
+      "duration_ms": 2000,
+      "requires": [{"type": "item", "id": "coolant_canister"}, {"type": "objective", "id": "measure_circuit"}],
+      "effects": {"items": {"coolant_canister": -1}, "flags_set": ["equipment_cooled"], "world": {"device.cooled": true}},
+      "score": 12
+    },
+    {
+      "id": "replace_board",
+      "title": {"en": "Replace the regulator board", "ar": "بدل لوحة المنظم"},
+      "hint": {"en": "Fit a repair kit once the unit is cool.", "ar": "ركب طقم إصلاح بعد ما الوحدة تبرد."},
+      "target": "regulator_board",
+      "animation": "repair",
+      "duration_ms": 3000,
+      "requires": [
+        {"type": "item", "id": "repair_kit"},
+        {"type": "flag", "id": "equipment_cooled", "hint": {"en": "Cool the unit before replacing the board.", "ar": "برّد الوحدة قبل تبديل اللوحة."}}
+      ],
+      "effects": {"items": {"repair_kit": -1}, "world": {"device.repaired": true}, "equipment_wear": {"wrench": 3}},
+      "score": 18
+    },
+    {
+      "id": "calibrate_device",
+      "title": {"en": "Calibrate and certify", "ar": "عاير الجهاز واعتمده"},
+      "hint": {"en": "Run the calibration routine against the reference cell.", "ar": "شغّل روتين المعايرة على الخلية المرجعية."},
+      "target": "atmosphere_analyser",
+      "animation": "confirm",
+      "duration_ms": 2200,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "world", "path": "device.repaired", "op": "eq", "value": true}],
+      "effects": {"world": {"device.calibrated": true}, "flags_set": ["device_calibrated"], "resources": {"power": -2}, "equipment_wear": {"scanner": 2}},
+      "score": 12,
+      "success_message": {"en": "Analyser calibrated and back in service.", "ar": "المحلل اتعاير ورجع للخدمة."}
+    }
+  ],
+  "side_actions": [
+    {
+      "id": "service_tools",
+      "title": {"en": "Bench-service your tools", "ar": "اعمل صيانة لأدواتك على المنضدة"},
+      "hint": {"en": "Optional: restores 15% condition to the scanner and multimeter.", "ar": "اختياري: بيرجع 15% لحالة جهاز المسح والملتيميتر."},
+      "target": "service_bench",
+      "animation": "maintain",
+      "duration_ms": 2600,
+      "requires": [{"type": "resource", "id": "power", "min": 6}],
+      "effects": {"resources": {"power": -6}, "equipment_restore": {"scanner": 15, "multimeter": 15}},
+      "score": 4,
+      "repeatable": true
+    }
+  ],
+  "hazards": [
+    {
+      "action": "replace_board",
+      "missing_any": ["equipment_cooled"],
+      "effects": {"items": {"repair_kit": -1}, "resources": {"power": -4}},
+      "message": {"en": "The board is still hot – the replacement is destroyed. Cool the unit first.", "ar": "اللوحة لسه سخنة – البديل اتلف. برّد الوحدة الأول."},
+      "mistake_penalty": 8.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 5.0, "time_target_seconds": 420.0, "time_bonus_max": 8.0, "pass_score_pct": 55.0, "efficiency_bonus": 5.0},
+  "completion": {
+    "effects": {"world": {"analog.device_ok": true}},
+    "unlocks": ["analog_emergency"],
+    "summary": {"en": "Device repaired and calibrated. Tool condition carries forward.", "ar": "الجهاز اتصلح واتعاير. حالة الأدوات بتنتقل للمرحلة الجاية."},
+    "continuity": [
+      {
+        "key": "service:multimeter",
+        "label": {"en": "Tool care → multimeter condition", "ar": "العناية بالأدوات ← حالة الملتيميتر"},
+        "kind": "equipment",
+        "metric": "equipment:multimeter",
+        "bands": [
+          {"min": 80, "value": 5, "reason": {"en": "Well-kept instrument.", "ar": "جهاز محافظ عليه."}},
+          {"min": 40, "value": -5, "reason": {"en": "Instrument showing wear.", "ar": "الجهاز عليه تآكل."}},
+          {"min": 0, "value": -20, "reason": {"en": "Neglected maintenance: the multimeter enters the next stage badly worn.", "ar": "صيانة مهملة: الملتيميتر بيدخل المرحلة الجاية متهالك."}}
+        ]
+      },
+      {
+        "key": "service:scanner",
+        "label": {"en": "Tool care → scanner condition", "ar": "العناية بالأدوات ← حالة جهاز المسح"},
+        "kind": "equipment",
+        "metric": "equipment:scanner",
+        "bands": [
+          {"min": 70, "value": 4, "reason": {"en": "Scanner healthy.", "ar": "جهاز المسح سليم."}},
+          {"min": 0, "value": -15, "reason": {"en": "Scanner left worn: expect failures later.", "ar": "جهاز المسح متهالك: توقع أعطال بعدين."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Calibration is part of the measurement", "ar": "المعايرة جزء من القياس"},
+      "detail": {"en": "Spaceflight instruments are re-calibrated against known references in flight; without it, a repaired sensor still produces unusable science.", "ar": "أجهزة الطيران الفضائي بتتعاير على مراجع معروفة أثناء الطيران؛ بدون كده الحساس المتصلح بيطلع بيانات غير صالحة."},
+      "source": "NASA – instrument calibration practices (curated summary)",
+      "url": "https://science.nasa.gov/",
+      "simulated": true
+    }
+  ],
+  "world_objects": [
+    {"id": "atmosphere_analyser", "label": {"en": "Atmosphere Analyser", "ar": "محلل الغلاف الجوي"}, "kind": "machine", "position": [0, 0, 8], "interactions": ["scan_device", "measure_circuit", "cool_unit", "calibrate_device"]},
+    {"id": "regulator_board", "label": {"en": "Regulator Board", "ar": "لوحة المنظم"}, "kind": "component", "position": [0.6, 1.0, 8], "interactions": ["replace_board"]},
+    {"id": "service_bench", "label": {"en": "Service Bench", "ar": "منضدة الصيانة"}, "kind": "station", "position": [3, 0, 8], "interactions": ["service_tools"], "prompt": {"en": "E – Service tools (6 kWh)", "ar": "E – صيانة الأدوات (6 كيلوواط ساعة)"}},
+    {"id": "stores_locker", "label": {"en": "Stores Locker", "ar": "خزانة المخزن"}, "kind": "locker", "position": [8, 0, 2], "interactions": ["take_coolant"]}
+  ],
+  "disclaimer": "Educational game simulation. Temperatures and voltages are invented."
+}

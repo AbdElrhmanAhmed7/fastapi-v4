@@ -1,0 +1,168 @@
+{
+  "id": "analog_emergency",
+  "stage": 2,
+  "title": {"en": "Emergency Drill", "ar": "تدريب طوارئ"},
+  "summary": {"en": "Smoke in the electrical bay: acknowledge, isolate, protect, suppress, evacuate, report.", "ar": "دخان في غرفة الكهرباء: أكّد الإنذار، اعزل، احمي نفسك، أخمد، أجلي الطاقم، اكتب التقرير."},
+  "environment": "earth_analog",
+  "estimated_minutes": 8,
+  "requires_missions": ["analog_water_recycling", "analog_comms_blackout", "analog_device_fault"],
+  "briefing": [
+    {"en": "This drill grades your readiness for the real mission.", "ar": "التدريب ده بيقيّم جاهزيتك للمهمة الحقيقية."},
+    {"en": "Protection before suppression. Always.", "ar": "الحماية قبل الإخماد. دايمًا."}
+  ],
+  "objectives": [
+    {
+      "id": "acknowledge_alarm",
+      "title": {"en": "Acknowledge the alarm", "ar": "أكّد استلام الإنذار"},
+      "hint": {"en": "Alarm panel by the hatch.", "ar": "لوحة الإنذار جنب الباب."},
+      "target": "alarm_panel",
+      "animation": "confirm",
+      "duration_ms": 900,
+      "effects": {"world": {"drill.active": true, "drill.smoke": true}, "flags_set": ["drill.alarm_ack"]},
+      "score": 8
+    },
+    {
+      "id": "isolate_electrical",
+      "title": {"en": "Isolate the electrical bay", "ar": "اعزل غرفة الكهرباء"},
+      "hint": {"en": "Cut power to the affected bay from the panel.", "ar": "اقطع الطاقة عن الغرفة المصابة من اللوحة."},
+      "target": "alarm_panel",
+      "animation": "turn_valve",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "wrench"}, {"type": "objective", "id": "acknowledge_alarm"}],
+      "effects": {"world": {"drill.electrical_isolated": true}, "resources": {"power": -3}, "equipment_wear": {"wrench": 3}},
+      "score": 12
+    },
+    {
+      "id": "open_emergency_locker",
+      "title": {"en": "Open the emergency locker", "ar": "افتح خزانة الطوارئ"},
+      "hint": {"en": "Mask, gloves, blanket and a CO2 extinguisher.", "ar": "قناع، قفازات، بطانية وجهاز إطفاء ثاني أكسيد الكربون."},
+      "target": "emergency_locker",
+      "animation": "pickup",
+      "duration_ms": 1500,
+      "require_previous": false,
+      "effects": {"items": {"oxygen_mask": 1, "thermal_gloves": 1, "fire_blanket": 1, "co2_extinguisher": 1}, "flags_set": ["drill.gear"]},
+      "score": 8
+    },
+    {
+      "id": "don_protection",
+      "title": {"en": "Don mask and gloves", "ar": "البس القناع والقفازات"},
+      "hint": {"en": "You cannot enter a smoke-filled bay unprotected.", "ar": "مش هتدخل غرفة مليانة دخان بدون حماية."},
+      "target": "emergency_locker",
+      "animation": "suit_check",
+      "duration_ms": 2000,
+      "requires": [{"type": "item", "id": "oxygen_mask"}, {"type": "item", "id": "thermal_gloves"}],
+      "effects": {"flags_set": ["drill.protected"], "world": {"drill.protected": true}},
+      "score": 10
+    },
+    {
+      "id": "suppress_smoke",
+      "title": {"en": "Suppress the fire", "ar": "أخمد الحريق"},
+      "hint": {"en": "CO2 extinguisher at the seat of the fire.", "ar": "جهاز ثاني أكسيد الكربون على بؤرة الحريق."},
+      "target": "electrical_bay",
+      "animation": "extinguish",
+      "duration_ms": 3200,
+      "requires": [
+        {"type": "item", "id": "co2_extinguisher"},
+        {"type": "flag", "id": "drill.protected", "hint": {"en": "Put on your mask and gloves first.", "ar": "البس القناع والقفازات الأول."}},
+        {"type": "world", "path": "drill.electrical_isolated", "op": "eq", "value": true}
+      ],
+      "effects": {"world": {"drill.smoke": false, "drill.smoke_out": true}, "equipment_wear": {"co2_extinguisher": 20}, "resources": {"oxygen": -4}},
+      "score": 20
+    },
+    {
+      "id": "evacuate_crew",
+      "title": {"en": "Evacuate the crew", "ar": "أجلي الطاقم"},
+      "hint": {"en": "Muster everyone at the airlock and count heads.", "ar": "جمّع الكل عند غرفة الهواء واعمل حصر."},
+      "target": "airlock",
+      "animation": "guide",
+      "duration_ms": 2400,
+      "requires": [{"type": "world", "path": "drill.smoke_out", "op": "eq", "value": true}],
+      "effects": {"flags_set": ["drill.evacuated"], "world": {"drill.crew_safe": true}},
+      "score": 14
+    },
+    {
+      "id": "restore_systems",
+      "title": {"en": "Restore ventilation and power", "ar": "رجّع التهوية والطاقة"},
+      "hint": {"en": "Clear the smoke, then re-energise the bay.", "ar": "نضّف الدخان وبعدين رجّع الطاقة للغرفة."},
+      "target": "alarm_panel",
+      "animation": "confirm",
+      "duration_ms": 2000,
+      "requires": [{"type": "flag", "id": "drill.evacuated"}],
+      "effects": {"world": {"drill.active": false, "power.online": true}, "resources": {"power": 5, "oxygen": 3}},
+      "score": 12
+    },
+    {
+      "id": "submit_training_report",
+      "title": {"en": "Submit the training report", "ar": "سلّم تقرير التدريب"},
+      "hint": {"en": "Mission Station: your readiness grade is computed here.", "ar": "محطة المهمة: تقييم جاهزيتك بيتحسب هنا."},
+      "target": "mission_station",
+      "animation": "read_terminal",
+      "duration_ms": 1600,
+      "requires": [{"type": "item", "id": "data_core"}, {"type": "objective", "id": "restore_systems"}],
+      "effects": {"flags_set": ["training_complete"], "readiness": 5.0},
+      "score": 12
+    }
+  ],
+  "hazards": [
+    {
+      "action": "suppress_smoke",
+      "missing_any": ["drill.protected"],
+      "effects": {"resources": {"oxygen": -10}, "readiness": -4.0},
+      "message": {"en": "You inhale smoke without a mask and lose oxygen. Protection first.", "ar": "استنشقت دخان بدون قناع وفقدت أكسجين. الحماية الأول."},
+      "mistake_penalty": 10.0
+    },
+    {
+      "action": "suppress_smoke",
+      "missing_any": ["drill.electrical_isolated"],
+      "effects": {"resources": {"power": -6}},
+      "message": {"en": "The bay is still live – the fire re-ignites behind you.", "ar": "الغرفة لسه فيها كهربا – الحريق ولع تاني وراك."},
+      "mistake_penalty": 8.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 6.0, "time_target_seconds": 480.0, "time_bonus_max": 10.0, "pass_score_pct": 65.0},
+  "completion": {
+    "effects": {"flags_set": ["training_passed"], "world": {"training.report": true, "training.complete": true}},
+    "unlocks": ["mars_arrival"],
+    "summary": {"en": "Earth Analog training complete. Your readiness index now decides how Mars treats you.", "ar": "التدريب الأرضي خلص. مؤشر جاهزيتك هو اللي هيحدد معاملة المريخ لك."},
+    "continuity": [
+      {
+        "key": "training_readiness",
+        "label": {"en": "Training grade → mission readiness", "ar": "تقييم التدريب ← جاهزية المهمة"},
+        "kind": "readiness",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 12, "reason": {"en": "Outstanding drill performance.", "ar": "أداء ممتاز في التدريب."}},
+          {"min": 70, "value": 6, "reason": {"en": "Good drill performance.", "ar": "أداء جيد في التدريب."}},
+          {"min": 0, "value": -8, "reason": {"en": "Weak drill performance lowers mission readiness.", "ar": "أداء ضعيف بيقلل جاهزية المهمة."}}
+        ]
+      },
+      {
+        "key": "training:oxygen",
+        "label": {"en": "Drill discipline → oxygen reserve", "ar": "انضباط التدريب ← احتياطي الأكسجين"},
+        "kind": "resource",
+        "metric": "mistakes",
+        "bands": [
+          {"min": 2, "value": -8, "reason": {"en": "Safety mistakes cost consumables.", "ar": "أخطاء السلامة بتكلف مستهلكات."}},
+          {"min": 0, "value": 6, "reason": {"en": "No safety mistakes: extra oxygen margin.", "ar": "مفيش أخطاء سلامة: هامش أكسجين إضافي."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Fire response order", "ar": "ترتيب الاستجابة للحريق"},
+      "detail": {"en": "ISS fire response: warn the crew, isolate power to the affected rack, don protection, then suppress and clean the atmosphere.", "ar": "استجابة الحريق على المحطة: نبّه الطاقم، اقطع الطاقة عن الرف المصاب، البس الحماية، وبعدين أخمد ونضّف الجو."},
+      "source": "NASA – ISS emergency procedures (curated summary)",
+      "url": "https://www.nasa.gov/missions/station/",
+      "simulated": true
+    }
+  ],
+  "world_objects": [
+    {"id": "alarm_panel", "label": {"en": "Alarm Panel", "ar": "لوحة الإنذار"}, "kind": "device", "position": [0, 1.2, -7], "interactions": ["acknowledge_alarm", "isolate_electrical", "restore_systems"]},
+    {"id": "emergency_locker", "label": {"en": "Emergency Locker", "ar": "خزانة الطوارئ"}, "kind": "locker", "position": [-2, 0, -7], "interactions": ["open_emergency_locker", "don_protection"]},
+    {"id": "electrical_bay", "label": {"en": "Electrical Bay", "ar": "غرفة الكهرباء"}, "kind": "room", "position": [-10, 0, 4], "interactions": ["suppress_smoke"]},
+    {"id": "airlock", "label": {"en": "Airlock", "ar": "غرفة الهواء"}, "kind": "door", "position": [10, 0, 8], "interactions": ["evacuate_crew"]},
+    {"id": "mission_station", "label": {"en": "Mission Station", "ar": "محطة المهمة"}, "kind": "terminal", "position": [0, 0, -6], "interactions": ["submit_training_report"]}
+  ],
+  "disclaimer": "Educational game simulation. Not a real fire-response procedure."
+}

@@ -1,0 +1,122 @@
+{
+  "id": "analog_water_leak",
+  "stage": 2,
+  "title": {"en": "Water Leak Repair", "ar": "إصلاح تسريب المياه"},
+  "summary": {"en": "Find the leak, close the valve, then repair the pipe. Wrong order costs water.", "ar": "لاقي التسريب، اقفل الصمام، وبعدين صلح الأنبوبة. الترتيب الغلط بيكلفك مياه."},
+  "environment": "earth_analog",
+  "estimated_minutes": 6,
+  "requires_missions": ["analog_systems_check"],
+  "briefing": [
+    {"en": "This is not a quiz: walk to the manifold, scan it, isolate it, repair it.", "ar": "دي مش أسئلة: اتحرك للمجمع، امسحه، اعزله، صلحه."},
+    {"en": "Repairing a pressurised line sprays water everywhere and wastes a repair kit.", "ar": "إصلاح خط تحت ضغط بيرش المياه في كل مكان ويضيع طقم إصلاح."}
+  ],
+  "objectives": [
+    {
+      "id": "scan_leak",
+      "title": {"en": "Locate the leak with the scanner", "ar": "حدد مكان التسريب بجهاز المسح"},
+      "hint": {"en": "Follow the wet floor to the manifold and scan the joints.", "ar": "اتبع الأرض المبلولة للمجمع وامسح الوصلات."},
+      "target": "water_manifold",
+      "animation": "scan",
+      "duration_ms": 2000,
+      "requires": [
+        {"type": "item", "id": "scanner"},
+        {"type": "world", "path": "leak_active", "op": "eq", "value": true, "hint": {"en": "There is no active leak right now.", "ar": "مفيش تسريب نشط دلوقتي."}}
+      ],
+      "effects": {"world": {"leak.located": true}, "flags_set": ["leak.detected"], "resources": {"power": -2}, "equipment_wear": {"scanner": 4}},
+      "score": 12,
+      "success_message": {"en": "Leak located at joint B-7, upstream of the valve.", "ar": "تم تحديد التسريب عند وصلة B-7 قبل الصمام."}
+    },
+    {
+      "id": "close_valve",
+      "title": {"en": "Close the isolation valve", "ar": "اقفل صمام العزل"},
+      "hint": {"en": "Use the wrench on valve B-7 to depressurise the branch.", "ar": "استخدم المفتاح على الصمام B-7 لتفريغ الضغط."},
+      "target": "isolation_valve",
+      "animation": "turn_valve",
+      "duration_ms": 2400,
+      "requires": [
+        {"type": "item", "id": "wrench"},
+        {"type": "objective", "id": "scan_leak", "hint": {"en": "Scan first – you do not know which valve to close.", "ar": "امسح الأول – مش عارف تقفل أي صمام."}}
+      ],
+      "effects": {"world": {"leak.valve_closed": true}, "flags_set": ["valve_closed"], "equipment_wear": {"wrench": 5}},
+      "score": 14,
+      "success_message": {"en": "Valve closed. Branch pressure dropping to zero.", "ar": "الصمام اتقفل. ضغط الفرع بينزل لصفر."}
+    },
+    {
+      "id": "repair_pipe",
+      "title": {"en": "Repair the pipe", "ar": "صلح الأنبوبة"},
+      "hint": {"en": "Fit a repair kit on the depressurised joint.", "ar": "ركب طقم إصلاح على الوصلة المفرغة."},
+      "target": "leaking_pipe",
+      "animation": "repair",
+      "duration_ms": 3000,
+      "requires": [
+        {"type": "item", "id": "repair_kit"},
+        {"type": "world", "path": "leak.valve_closed", "op": "eq", "value": true, "hint": {"en": "Close the isolation valve before repairing.", "ar": "اقفل صمام العزل قبل الإصلاح."}}
+      ],
+      "effects": {"items": {"repair_kit": -1}, "resources": {"water": 12, "power": -5}, "world": {"leak_active": false, "leak.repaired": true}, "equipment_wear": {"wrench": 4}},
+      "score": 18,
+      "success_message": {"en": "Joint sealed. Leak stopped and 12 L recovered.", "ar": "الوصلة اتحكمت. التسريب وقف ورجع 12 لتر."}
+    },
+    {
+      "id": "verify_pressure",
+      "title": {"en": "Re-pressurise and verify", "ar": "أعد الضغط واتأكد"},
+      "hint": {"en": "Open the valve slowly and scan for residual moisture.", "ar": "افتح الصمام بالراحة وامسح أي رطوبة متبقية."},
+      "target": "water_manifold",
+      "animation": "scan",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "objective", "id": "repair_pipe"}],
+      "effects": {"world": {"leak.verified": true, "leak.valve_closed": false}, "flags_set": ["water_loop_verified"], "resources": {"power": -1}, "equipment_wear": {"scanner": 2}},
+      "score": 10,
+      "success_message": {"en": "Loop holds pressure. Water system certified.", "ar": "الدورة محافظة على الضغط. نظام المياه معتمد."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "repair_pipe",
+      "missing_any": ["leak.valve_closed"],
+      "effects": {"resources": {"water": -12}, "equipment_wear": {"wrench": 8}},
+      "message": {"en": "The line is still pressurised – water sprays across the bay. Close the valve first.", "ar": "الخط لسه تحت ضغط – المياه بترش في كل مكان. اقفل الصمام الأول."},
+      "mistake_penalty": 8.0
+    },
+    {
+      "action": "close_valve",
+      "missing_any": ["scan_leak"],
+      "effects": {"resources": {"water": -4}},
+      "message": {"en": "You closed the wrong branch and drained a clean line.", "ar": "قفلت الفرع الغلط وصرفت خط سليم."},
+      "mistake_penalty": 5.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 6.0, "time_target_seconds": 300.0, "time_bonus_max": 10.0, "pass_score_pct": 60.0},
+  "completion": {
+    "effects": {"world": {"analog.water_ok": true}},
+    "unlocks": ["analog_water_recycling"],
+    "summary": {"en": "Leak isolated and repaired. Water discipline now carries into the next stages.", "ar": "التسريب اتعزل واتصلح. انضباط المياه هيأثر على المراحل الجاية."},
+    "continuity": [
+      {
+        "key": "leak:water",
+        "label": {"en": "Leak handling → water reserve", "ar": "التعامل مع التسريب ← احتياطي المياه"},
+        "kind": "resource",
+        "metric": "mistakes",
+        "bands": [
+          {"min": 3, "value": -10, "reason": {"en": "Repeated wrong-order attempts wasted stored water.", "ar": "محاولات متكررة بترتيب غلط ضيعت مياه مخزنة."}},
+          {"min": 1, "value": -4, "reason": {"en": "One wrong-order attempt cost water.", "ar": "محاولة واحدة بترتيب غلط كلفت مياه."}},
+          {"min": 0, "value": 8, "reason": {"en": "Correct order, no spillage: water reserve bonus.", "ar": "ترتيب صحيح بدون فقد: مكافأة احتياطي مياه."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Isolate before you repair", "ar": "اعزل قبل ما تصلح"},
+      "detail": {"en": "On the ISS, fluid lines are isolated with quick-disconnects and valves before any maintenance so a repair cannot drain the loop.", "ar": "على محطة الفضاء الدولية، خطوط السوائل بتتعزل بوصلات سريعة وصمامات قبل أي صيانة عشان الإصلاح ميصرّفش الدورة."},
+      "source": "NASA – ISS Environmental Control and Life Support System (ECLSS)",
+      "url": "https://www.nasa.gov/reference/environmental-control-and-life-support-system-eclss/",
+      "simulated": true
+    }
+  ],
+  "world_objects": [
+    {"id": "water_manifold", "label": {"en": "Water Manifold", "ar": "مجمع المياه"}, "kind": "pipe", "position": [-3, 0, 5], "interactions": ["scan_leak", "verify_pressure"]},
+    {"id": "isolation_valve", "label": {"en": "Isolation Valve B-7", "ar": "صمام العزل B-7"}, "kind": "valve", "position": [-4.2, 0.9, 5], "interactions": ["close_valve"], "prompt": {"en": "E – Turn valve (wrench required)", "ar": "E – لف الصمام (محتاج مفتاح)"}},
+    {"id": "leaking_pipe", "label": {"en": "Leaking Pipe Joint", "ar": "وصلة الأنبوبة المسربة"}, "kind": "pipe", "position": [-3.6, 0.4, 5.6], "interactions": ["repair_pipe"]}
+  ],
+  "disclaimer": "Educational game simulation. Pressure and water values are simplified."
+}

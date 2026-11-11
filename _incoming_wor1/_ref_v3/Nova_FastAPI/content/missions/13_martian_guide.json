@@ -1,0 +1,181 @@
+{
+  "id": "martian_guide",
+  "stage": 6,
+  "title": {"en": "Martian Guide – Geological Sampling", "ar": "الدليل المريخي – أخذ عينات جيولوجية"},
+  "summary": {"en": "Drive to the outcrop, scan it, drill a sample, return to the lab, analyse and log it.", "ar": "سوق للمكش الصخري، امسحه، اعمل عينة، ارجع المختبر، حللها وسجلها."},
+  "environment": "mars_lab",
+  "estimated_minutes": 10,
+  "requires_missions": ["mars_rover_traverse"],
+  "briefing": [
+    {"en": "Science is a chain: context → scan → sample → analysis → record.", "ar": "العلم سلسلة: سياق ← مسح ← عينة ← تحليل ← تسجيل."},
+    {"en": "A sample without context is just a rock.", "ar": "عينة بدون سياق مجرد حجر."}
+  ],
+  "objectives": [
+    {
+      "id": "drive_to_outcrop",
+      "title": {"en": "Drive to the outcrop", "ar": "سوق للمكش الصخري"},
+      "hint": {"en": "Use the rover to reach Sample Site Alpha.", "ar": "استخدم العربة للوصول لموقع العينة ألفا."},
+      "target": "rover",
+      "animation": "enter_rover",
+      "duration_ms": 2000,
+      "requires": [{"type": "mission", "id": "mars_rover_traverse", "status": "completed"}, {"type": "item", "id": "geology_map"}],
+      "effects": {"world": {"geology.at_site": true}, "resources": {"fuel": -2}},
+      "score": 10
+    },
+    {
+      "id": "disembark_at_site",
+      "title": {"en": "Disembark at the site", "ar": "انزل عند الموقع"},
+      "hint": {"en": "Park and step onto the outcrop.", "ar": "اركن وانزل على المكش."},
+      "target": "outcrop",
+      "animation": "exit_rover",
+      "duration_ms": 1800,
+      "requires": [{"type": "objective", "id": "drive_to_outcrop"}],
+      "effects": {"world": {"geology.on_foot": true}, "resources": {"oxygen": -2}},
+      "score": 8
+    },
+    {
+      "id": "scan_outcrop",
+      "title": {"en": "Scan the rock and soil", "ar": "امسح الصخور والتربة"},
+      "hint": {"en": "Record layering, grain size and spectral hints before drilling.", "ar": "سجل الطبقات وحجم الحبيبات والمؤشرات الطيفية قبل الحفر."},
+      "target": "outcrop",
+      "animation": "scan",
+      "duration_ms": 2600,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "objective", "id": "disembark_at_site"}],
+      "effects": {"world": {"geology.scanned": true}, "flags_set": ["geology.scanned"], "resources": {"power": -3}, "equipment_wear": {"scanner": 5}},
+      "score": 14
+    },
+    {
+      "id": "collect_sample",
+      "title": {"en": "Drill and seal a core sample", "ar": "احفر واقفل عينة لبية"},
+      "hint": {"en": "Core drill plus a sterile sample container.", "ar": "مثقاب لبّي وحاوية عينة معقمة."},
+      "target": "sample_spot",
+      "animation": "drill",
+      "duration_ms": 3500,
+      "requires": [
+        {"type": "item", "id": "core_drill"},
+        {"type": "item", "id": "sample_container"},
+        {"type": "flag", "id": "geology.scanned", "hint": {"en": "Scan the outcrop before drilling.", "ar": "امسح المكش قبل الحفر."}}
+      ],
+      "effects": {"items": {"sample_container": -1}, "flags_set": ["sample_collected"], "world": {"geology.sample_collected": true}, "resources": {"power": -4}, "equipment_wear": {"core_drill": 8}, "stats": {"samples_collected": 1.0}},
+      "score": 18,
+      "success_message": {"en": "Core sealed and labelled. Take it to the lab.", "ar": "العينة اتقفلت واتوسمت. خدها للمختبر."}
+    },
+    {
+      "id": "return_to_lab",
+      "title": {"en": "Return to the lab", "ar": "ارجع للمختبر"},
+      "hint": {"en": "Drive back and enter the pressurised lab.", "ar": "سوق راجع وادخل المختبر المضغوط."},
+      "target": "lab_airlock",
+      "animation": "walk_to",
+      "duration_ms": 2200,
+      "requires": [{"type": "flag", "id": "sample_collected"}],
+      "effects": {"world": {"geology.in_lab": true}, "resources": {"fuel": -2}},
+      "score": 10
+    },
+    {
+      "id": "analyse_sample",
+      "title": {"en": "Analyse the sample", "ar": "حلل العينة"},
+      "hint": {"en": "Run the spectrometer to get oxide composition.", "ar": "شغّل المطياف للحصول على تركيب الأكاسيد."},
+      "target": "spectrometer_bench",
+      "animation": "analyse",
+      "duration_ms": 3200,
+      "requires": [{"type": "item", "id": "spectrometer"}, {"type": "flag", "id": "sample_collected"}],
+      "effects": {"flags_set": ["sample_analysed"], "world": {"geology.sample_analysed": true}, "resources": {"power": -4}, "equipment_wear": {"spectrometer": 5}},
+      "score": 18
+    },
+    {
+      "id": "log_findings",
+      "title": {"en": "Log the finding in the science database", "ar": "سجل النتيجة في قاعدة البيانات العلمية"},
+      "hint": {"en": "Write the interpretation with its source into the mission database.", "ar": "اكتب التفسير ومصدره في قاعدة بيانات المهمة."},
+      "target": "science_database",
+      "animation": "read_terminal",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "data_core"}, {"type": "flag", "id": "sample_analysed"}],
+      "effects": {"flags_set": ["science_logged"], "world": {"geology.logged": true}, "readiness": 3.0},
+      "score": 12,
+      "success_message": {"en": "Finding logged with provenance and interpretation.", "ar": "تم تسجيل النتيجة بالمصدر والتفسير."}
+    }
+  ],
+  "side_actions": [
+    {
+      "id": "collect_extra_sample",
+      "title": {"en": "Collect an extra sample", "ar": "خد عينة إضافية"},
+      "hint": {"en": "Optional: more science, more wear on the drill.", "ar": "اختياري: علم أكتر، وتآكل أكتر للمثقاب."},
+      "target": "sample_spot",
+      "animation": "drill",
+      "duration_ms": 3500,
+      "requires": [{"type": "item", "id": "core_drill"}, {"type": "item", "id": "sample_container"}, {"type": "flag", "id": "geology.scanned"}],
+      "effects": {"items": {"sample_container": -1}, "resources": {"power": -4}, "equipment_wear": {"core_drill": 8}, "stats": {"samples_collected": 1.0}},
+      "score": 4,
+      "repeatable": true
+    }
+  ],
+  "hazards": [
+    {
+      "action": "collect_sample",
+      "missing_any": ["geology.scanned"],
+      "effects": {"equipment_wear": {"core_drill": 12}},
+      "message": {"en": "Drilling blind chips the bit and gives you a sample with no context.", "ar": "الحفر بدون مسح بيكسر السن ويدي عينة بدون سياق."},
+      "mistake_penalty": 7.0
+    },
+    {
+      "action": "analyse_sample",
+      "missing_any": ["sample_collected"],
+      "effects": {"resources": {"power": -3}},
+      "message": {"en": "There is nothing in the spectrometer chamber.", "ar": "مفيش حاجة في غرفة المطياف."},
+      "mistake_penalty": 4.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 5.0, "time_target_seconds": 600.0, "time_bonus_max": 10.0, "pass_score_pct": 60.0, "efficiency_bonus": 6.0},
+  "completion": {
+    "effects": {"world": {"geology.done": true}},
+    "unlocks": ["earth_trends"],
+    "summary": {"en": "Sample analysed and logged. The science database is now live.", "ar": "العينة اتحللت واتسجلت. قاعدة البيانات العلمية بقت شغالة."},
+    "continuity": [
+      {
+        "key": "science:power",
+        "label": {"en": "Lab discipline → power reserve", "ar": "انضباط المختبر ← احتياطي الطاقة"},
+        "kind": "resource",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 8, "reason": {"en": "Efficient lab work.", "ar": "شغل مختبر فعال."}},
+          {"min": 0, "value": -5, "reason": {"en": "Repeated runs wasted lab power.", "ar": "تشغيلات متكررة ضيعت طاقة المختبر."}}
+        ]
+      },
+      {
+        "key": "science:core_drill",
+        "label": {"en": "Drill care → drill condition", "ar": "العناية بالمثقاب ← حالته"},
+        "kind": "equipment",
+        "metric": "equipment:core_drill",
+        "bands": [
+          {"min": 60, "value": 5, "reason": {"en": "Drill in good shape.", "ar": "المثقاب بحالة جيدة."}},
+          {"min": 0, "value": -15, "reason": {"en": "Drill badly worn by blind drilling.", "ar": "المثقاب اتآكل من الحفر بدون مسح."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Mars is mostly basalt", "ar": "المريخ بازلتي في معظمه"},
+      "detail": {"en": "The Martian crust is dominantly basaltic; olivine-rich and clay-bearing units record how much water altered the rock.", "ar": "قشرة المريخ بازلتية في الأساس؛ الوحدات الغنية بالأوليفين والطين بتسجل قد إيه المياه غيرت الصخر."},
+      "source": "NASA Mars Exploration Program – Mars facts",
+      "url": "https://mars.nasa.gov/all-about-mars/facts/",
+      "simulated": false
+    },
+    {
+      "topic": {"en": "Sample caching", "ar": "تخزين العينات"},
+      "detail": {"en": "Perseverance seals rock cores in ultra-clean tubes and caches them for a future Mars Sample Return campaign.", "ar": "بيرسيفرانس بيقفل العينات اللبية في أنابيب فائقة النظافة ويخزنها لحملة إرجاع عينات مستقبلية."},
+      "source": "NASA – Mars Sample Return / Perseverance sampling",
+      "url": "https://science.nasa.gov/mission/mars-sample-return/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "rover", "label": {"en": "Rover", "ar": "العربة"}, "kind": "vehicle", "position": [36, 0, -8], "interactions": ["drive_to_outcrop"]},
+    {"id": "outcrop", "label": {"en": "Layered Outcrop", "ar": "مكش صخري مطبق"}, "kind": "geology", "position": [418, 0, -58], "interactions": ["disembark_at_site", "scan_outcrop"]},
+    {"id": "sample_spot", "label": {"en": "Drill Spot", "ar": "نقطة الحفر"}, "kind": "geology", "position": [419, 0.2, -59], "interactions": ["collect_sample", "collect_extra_sample"]},
+    {"id": "lab_airlock", "label": {"en": "Lab Airlock", "ar": "باب المختبر"}, "kind": "door", "position": [34, 0, -16], "interactions": ["return_to_lab"]},
+    {"id": "spectrometer_bench", "label": {"en": "Spectrometer Bench", "ar": "منضدة المطياف"}, "kind": "machine", "position": [30, 0, -18], "interactions": ["analyse_sample"]},
+    {"id": "science_database", "label": {"en": "Science Database", "ar": "قاعدة البيانات العلمية"}, "kind": "terminal", "position": [28, 0, -18], "interactions": ["log_findings"]}
+  ],
+  "disclaimer": "Educational game simulation. Compositions are generated from curated mineral ranges, not measured from a real sample."
+}

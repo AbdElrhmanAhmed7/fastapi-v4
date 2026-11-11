@@ -1,0 +1,138 @@
+{
+  "id": "analog_power_link",
+  "stage": 2,
+  "title": {"en": "Connect the Power Module", "ar": "توصيل وحدة الطاقة"},
+  "summary": {"en": "Isolate the breaker, connect a power module, deploy a panel and energise the bus.", "ar": "اعزل القاطع، وصل وحدة طاقة، انشر لوح شمسي وشغّل الشبكة."},
+  "environment": "earth_analog",
+  "estimated_minutes": 7,
+  "requires_missions": ["analog_systems_check"],
+  "briefing": [
+    {"en": "Never connect a module to a live bus.", "ar": "عمرك ما توصل وحدة على شبكة شغالة."},
+    {"en": "Power you save here is power you land with on Mars.", "ar": "الطاقة اللي بتوفرها هنا هي اللي هتنزل بيها على المريخ."}
+  ],
+  "objectives": [
+    {
+      "id": "inspect_bus",
+      "title": {"en": "Inspect the distribution bus", "ar": "افحص شبكة التوزيع"},
+      "hint": {"en": "Measure each branch before touching anything.", "ar": "قيس كل فرع قبل ما تلمس أي حاجة."},
+      "target": "power_panel",
+      "animation": "measure",
+      "duration_ms": 1600,
+      "requires": [{"type": "item", "id": "multimeter"}],
+      "effects": {"world": {"power.bus_ok": true}, "resources": {"power": -1}, "equipment_wear": {"multimeter": 2}},
+      "score": 10
+    },
+    {
+      "id": "isolate_breaker",
+      "title": {"en": "Isolate the main breaker", "ar": "اعزل القاطع الرئيسي"},
+      "hint": {"en": "Lock the breaker open and tag it.", "ar": "اقفل القاطع على وضع الفصل وحط علامة."},
+      "target": "main_breaker",
+      "animation": "turn_valve",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "wrench"}, {"type": "objective", "id": "inspect_bus"}],
+      "effects": {"world": {"power.isolated": true}, "flags_set": ["power.isolated"], "equipment_wear": {"wrench": 3}},
+      "score": 12,
+      "success_message": {"en": "Bus isolated and tagged out.", "ar": "الشبكة اتعزلت وعليها علامة."}
+    },
+    {
+      "id": "fetch_power_module",
+      "title": {"en": "Collect the power module and panel", "ar": "خد وحدة الطاقة واللوح"},
+      "hint": {"en": "Stores: power cell and a folded solar panel.", "ar": "المخزن: خلية طاقة ولوح شمسي مطوي."},
+      "target": "stores_locker",
+      "animation": "pickup",
+      "duration_ms": 1400,
+      "require_previous": false,
+      "effects": {"items": {"power_cell": 1, "solar_panel": 1}},
+      "score": 8
+    },
+    {
+      "id": "connect_module",
+      "title": {"en": "Connect the power module", "ar": "وصل وحدة الطاقة"},
+      "hint": {"en": "Only safe while the breaker is isolated.", "ar": "آمن بس والقاطع معزول."},
+      "target": "power_module_bay",
+      "animation": "install",
+      "duration_ms": 2600,
+      "requires": [
+        {"type": "item", "id": "power_cell"},
+        {"type": "flag", "id": "power.isolated", "hint": {"en": "Isolate the breaker first.", "ar": "اعزل القاطع الأول."}}
+      ],
+      "effects": {"items": {"power_cell": -1}, "world": {"power.module_connected": true}},
+      "score": 16
+    },
+    {
+      "id": "deploy_solar",
+      "title": {"en": "Deploy the solar panel", "ar": "انشر اللوح الشمسي"},
+      "hint": {"en": "Mount the panel on the external frame.", "ar": "ركب اللوح على الإطار الخارجي."},
+      "target": "solar_frame",
+      "animation": "install",
+      "duration_ms": 2400,
+      "requires": [{"type": "item", "id": "solar_panel"}, {"type": "objective", "id": "connect_module"}],
+      "effects": {"items": {"solar_panel": -1}, "world": {"power.solar_deployed": true}},
+      "score": 12
+    },
+    {
+      "id": "energise_bus",
+      "title": {"en": "Energise the bus", "ar": "شغّل الشبكة"},
+      "hint": {"en": "Close the breaker and watch the load ramp.", "ar": "اقفل القاطع وراقب ارتفاع الحمل."},
+      "target": "main_breaker",
+      "animation": "confirm",
+      "duration_ms": 1600,
+      "requires": [{"type": "world", "path": "power.module_connected", "op": "eq", "value": true}],
+      "effects": {"world": {"power.online": true}, "flags_set": ["power_online"], "flags_clear": ["power.isolated"], "resources": {"power": 25}},
+      "score": 14,
+      "success_message": {"en": "Bus online (+25 kWh).", "ar": "الشبكة شغالة (+25 كيلوواط ساعة)."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "connect_module",
+      "missing_any": ["power.isolated"],
+      "effects": {"resources": {"power": -8}},
+      "message": {"en": "Arc flash! You connected a module to a live bus and tripped the branch.", "ar": "قوس كهربائي! وصلت وحدة على شبكة شغالة والفرع فصل."},
+      "mistake_penalty": 8.0
+    },
+    {
+      "action": "energise_bus",
+      "missing_any": ["power.module_connected"],
+      "effects": {"resources": {"power": -5}},
+      "message": {"en": "Nothing to energise – the module bay is still empty.", "ar": "مفيش حاجة تشغلها – مكان الوحدة لسه فاضي."},
+      "mistake_penalty": 4.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 5.0, "time_target_seconds": 420.0, "time_bonus_max": 8.0, "pass_score_pct": 55.0},
+  "completion": {
+    "effects": {"world": {"analog.power_ok": true}},
+    "unlocks": ["analog_comms_blackout", "analog_water_recycling"],
+    "summary": {"en": "Habitat bus is online with solar support.", "ar": "شبكة القاعدة شغالة بدعم شمسي."},
+    "continuity": [
+      {
+        "key": "power:power",
+        "label": {"en": "Power discipline → power reserve", "ar": "انضباط الطاقة ← احتياطي الطاقة"},
+        "kind": "resource",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 10, "reason": {"en": "Clean, isolated installation: extra reserve.", "ar": "تركيب نظيف ومعزول: احتياطي إضافي."}},
+          {"min": 60, "value": 4, "reason": {"en": "Acceptable installation.", "ar": "تركيب مقبول."}},
+          {"min": 0, "value": -8, "reason": {"en": "Arc damage left the bus lossy.", "ar": "ضرر القوس الكهربائي خلا الشبكة تفقد طاقة."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Lock-out / tag-out", "ar": "العزل ووضع العلامات"},
+      "detail": {"en": "Electrical work in spaceflight hardware follows lock-out/tag-out: energy sources are isolated and labelled before maintenance.", "ar": "الشغل الكهربائي في أجهزة الطيران الفضائي بيتبع العزل ووضع العلامات: مصادر الطاقة بتتعزل وتتوسم قبل الصيانة."},
+      "source": "NASA-STD-8719.24 (payload electrical safety, summarised)",
+      "url": "https://standards.nasa.gov/",
+      "simulated": true
+    }
+  ],
+  "world_objects": [
+    {"id": "power_panel", "label": {"en": "Power Panel", "ar": "لوحة الطاقة"}, "kind": "device", "position": [5, 0, -4], "interactions": ["inspect_bus"]},
+    {"id": "main_breaker", "label": {"en": "Main Breaker", "ar": "القاطع الرئيسي"}, "kind": "switch", "position": [5.8, 1.1, -4], "interactions": ["isolate_breaker", "energise_bus"]},
+    {"id": "stores_locker", "label": {"en": "Stores Locker", "ar": "خزانة المخزن"}, "kind": "locker", "position": [8, 0, 2], "interactions": ["fetch_power_module"]},
+    {"id": "power_module_bay", "label": {"en": "Power Module Bay", "ar": "مكان وحدة الطاقة"}, "kind": "device", "position": [7, 0, -2], "interactions": ["connect_module"]},
+    {"id": "solar_frame", "label": {"en": "Solar Frame", "ar": "الإطار الشمسي"}, "kind": "structure", "position": [12, 0, 6], "interactions": ["deploy_solar"]}
+  ],
+  "disclaimer": "Educational game simulation. Voltages and energy units are simplified."
+}

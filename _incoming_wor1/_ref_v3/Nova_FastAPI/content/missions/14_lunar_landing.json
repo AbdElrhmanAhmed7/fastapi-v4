@@ -1,0 +1,136 @@
+{
+  "id": "lunar_landing",
+  "stage": 7,
+  "title": {"en": "Lunar Landing Navigator", "ar": "محاكي الهبوط على القمر"},
+  "summary": {"en": "A separate simulator session: fly a powered descent and touch down inside the pad.", "ar": "جلسة محاكاة منفصلة: نفّذ هبوط بمحرك والمس الأرض داخل منطقة الهبوط."},
+  "environment": "simulation_center",
+  "estimated_minutes": 10,
+  "requires_missions": ["mars_arrival"],
+  "simulation": "lunar_lander",
+  "briefing": [
+    {"en": "This is a SIMULATOR on the training campus – the Moon is not Mars.", "ar": "ده محاكي داخل مركز التدريب – القمر مش المريخ."},
+    {"en": "Lunar gravity is 1.62 m/s². There is no atmosphere, so no parachutes: only thrust.", "ar": "جاذبية القمر 1.62 م/ث². مفيش غلاف جوي، يعني مفيش مظلات: دفع بس."},
+    {"en": "Touch down under 3 m/s vertical, 1.5 m/s horizontal, within 8 degrees of vertical, on the pad.", "ar": "المس الأرض بأقل من 3 م/ث رأسي و1.5 م/ث أفقي وبميل أقل من 8 درجات، على منطقة الهبوط."}
+  ],
+  "objectives": [
+    {
+      "id": "enter_simulator",
+      "title": {"en": "Enter the landing simulator", "ar": "ادخل محاكي الهبوط"},
+      "hint": {"en": "Strap in and power up the console.", "ar": "اربط الحزام وشغّل الكونسول."},
+      "target": "simulator_pod",
+      "animation": "enter_pod",
+      "duration_ms": 2200,
+      "effects": {"world": {"simulator.entered": true}, "resources": {"power": -2}},
+      "score": 6
+    },
+    {
+      "id": "review_landing_brief",
+      "title": {"en": "Review altitude, speed and fuel", "ar": "راجع الارتفاع والسرعة والوقود"},
+      "hint": {"en": "Read the initial state and the terrain profile before burning.", "ar": "اقرأ الحالة الابتدائية ومقطع التضاريس قبل ما تحرق وقود."},
+      "target": "sim_console",
+      "animation": "read_terminal",
+      "duration_ms": 1600,
+      "requires": [{"type": "objective", "id": "enter_simulator"}],
+      "effects": {"world": {"lander.briefed": true}},
+      "score": 8
+    },
+    {
+      "id": "configure_descent",
+      "title": {"en": "Choose a descent strategy", "ar": "اختار استراتيجية الهبوط"},
+      "hint": {"en": "Conservative saves attitude control, aggressive saves fuel.", "ar": "المحافظة بتوفر تحكم في الميل، والسريعة بتوفر وقود."},
+      "target": "sim_console",
+      "animation": "confirm",
+      "duration_ms": 1200,
+      "requires": [{"type": "objective", "id": "review_landing_brief"}],
+      "payload": [{"name": "strategy", "type": "string", "choices": ["conservative", "aggressive"], "default": "conservative", "label": {"en": "Descent strategy", "ar": "استراتيجية الهبوط"}}],
+      "effects": {"world": {"lander.strategy": "{{payload.strategy}}"}},
+      "score": 8
+    },
+    {
+      "id": "fly_descent",
+      "title": {"en": "Fly the powered descent", "ar": "نفّذ الهبوط بالمحرك"},
+      "hint": {"en": "Tick the simulator with throttle and attitude until you land safely.", "ar": "نفّذ المحاكاة بالدفع والميل لحد ما تهبط بأمان."},
+      "target": "sim_console",
+      "animation": "pilot",
+      "duration_ms": 1500,
+      "requires": [{"type": "sim", "path": "status", "op": "eq", "value": "succeeded", "hint": {"en": "Land safely inside the simulator first.", "ar": "اهبط بأمان داخل المحاكي الأول."}}],
+      "effects": {"world": {"lander.landed": true}, "flags_set": ["lunar_landed"]},
+      "score": 30,
+      "success_message": {"en": "Contact light. Engine stop. You are on the pad.", "ar": "لمسة الأرض. إيقاف المحرك. انت على منطقة الهبوط."}
+    },
+    {
+      "id": "evaluate_landing",
+      "title": {"en": "Review the landing score", "ar": "راجع تقييم الهبوط"},
+      "hint": {"en": "Accuracy, touchdown speeds, attitude and fuel usage.", "ar": "الدقة وسرعات اللمس والميل واستهلاك الوقود."},
+      "target": "sim_console",
+      "animation": "read_terminal",
+      "duration_ms": 1600,
+      "requires": [{"type": "objective", "id": "fly_descent"}],
+      "effects": {"world": {"lander.evaluated": true}, "flags_set": ["lunar_certified"], "readiness": 4.0},
+      "score": 12
+    },
+    {
+      "id": "exit_simulator",
+      "title": {"en": "Exit the simulator", "ar": "اخرج من المحاكي"},
+      "hint": {"en": "Session over – back to the campus.", "ar": "الجلسة خلصت – ارجع للمركز."},
+      "target": "simulator_pod",
+      "animation": "exit_pod",
+      "duration_ms": 1800,
+      "requires": [{"type": "objective", "id": "evaluate_landing"}],
+      "effects": {"world": {"simulator.entered": false, "simulator.session_done": true}},
+      "score": 6
+    }
+  ],
+  "hazards": [
+    {
+      "action": "fly_descent",
+      "missing_any": ["status"],
+      "effects": {"resources": {"power": -2}},
+      "message": {"en": "You have not landed yet. Keep flying the descent (or reset the run).", "ar": "لسه ما هبطتش. كمل الهبوط (أو اعمل إعادة تشغيل)."},
+      "mistake_penalty": 3.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 3.0, "time_target_seconds": 600.0, "time_bonus_max": 10.0, "pass_score_pct": 55.0},
+  "completion": {
+    "effects": {"world": {"lander.done": true}},
+    "unlocks": ["earth_trends"],
+    "summary": {"en": "Lunar landing certified inside the simulator.", "ar": "تم اعتماد الهبوط القمري داخل المحاكي."},
+    "continuity": [
+      {
+        "key": "landing:power",
+        "label": {"en": "Simulator performance → power reserve", "ar": "أداء المحاكي ← احتياطي الطاقة"},
+        "kind": "resource",
+        "metric": "sim:result.score_pct",
+        "bands": [
+          {"min": 85, "value": 8, "reason": {"en": "Precise landing, minimal fuel.", "ar": "هبوط دقيق ووقود أقل."}},
+          {"min": 60, "value": 3, "reason": {"en": "Safe landing.", "ar": "هبوط آمن."}},
+          {"min": 0, "value": -5, "reason": {"en": "Rough landing.", "ar": "هبوط عنيف."}}
+        ]
+      },
+      {
+        "key": "landing_readiness",
+        "label": {"en": "Piloting skill → readiness", "ar": "مهارة القيادة ← الجاهزية"},
+        "kind": "readiness",
+        "metric": "sim:result.score_pct",
+        "bands": [
+          {"min": 85, "value": 8, "reason": {"en": "Excellent piloting.", "ar": "قيادة ممتازة."}},
+          {"min": 0, "value": -3, "reason": {"en": "Piloting needs work.", "ar": "القيادة محتاجة تدريب."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "No atmosphere, no parachutes", "ar": "مفيش غلاف جوي يعني مفيش مظلات"},
+      "detail": {"en": "The Moon's surface gravity is about 1.62 m/s² and it has no meaningful atmosphere, so every landing must be propulsive – Apollo's LM used a throttleable descent engine.", "ar": "جاذبية سطح القمر حوالي 1.62 م/ث² ومفيش غلاف جوي يُذكر، فكل هبوط لازم يكون بالمحركات – مركبة أبولو استخدمت محرك هبوط قابل للتحكم في الدفع."},
+      "source": "NASA – Moon facts / Apollo Lunar Module",
+      "url": "https://science.nasa.gov/moon/facts/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "simulator_pod", "label": {"en": "Landing Simulator Pod", "ar": "كبسولة محاكي الهبوط"}, "kind": "vehicle", "position": [-12, 0, 0], "interactions": ["enter_simulator", "exit_simulator"]},
+    {"id": "sim_console", "label": {"en": "Simulator Console", "ar": "كونسول المحاكي"}, "kind": "terminal", "position": [-12, 1.1, 0.8], "interactions": ["review_landing_brief", "configure_descent", "fly_descent", "evaluate_landing"]}
+  ],
+  "disclaimer": "Educational game simulation. The lander model is simplified 2-D physics, not a flight-certified simulator."
+}

@@ -1,0 +1,107 @@
+{
+  "id": "analog_systems_check",
+  "stage": 2,
+  "title": {"en": "Habitat Systems Survey", "ar": "فحص أنظمة القاعدة"},
+  "summary": {"en": "Inspect ventilation, the power bus and the water loop inside the Earth Analog habitat.", "ar": "افحص التهوية ولوحة الطاقة ودورة المياه داخل قاعدة التدريب الأرضية."},
+  "environment": "earth_analog",
+  "estimated_minutes": 7,
+  "requires_missions": ["training_prep"],
+  "briefing": [
+    {"en": "An analog habitat mimics mission conditions on Earth so mistakes are cheap.", "ar": "قاعدة التدريب بتحاكي ظروف المهمة على الأرض عشان الغلط يكون رخيص."},
+    {"en": "Carry your scanner and multimeter: readings, not guesses.", "ar": "خد جهاز المسح والملتيميتر: قراءات مش تخمين."}
+  ],
+  "objectives": [
+    {
+      "id": "check_ventilation",
+      "title": {"en": "Check the ventilation loop", "ar": "افحص نظام التهوية"},
+      "hint": {"en": "Ventilation panel: scan airflow and CO2 scrubber status.", "ar": "لوحة التهوية: امسح تدفق الهواء وحالة فلتر ثاني أكسيد الكربون."},
+      "target": "ventilation_panel",
+      "animation": "scan",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "scanner"}],
+      "effects": {"world": {"analog.ventilation_ok": true}, "resources": {"power": -2}, "equipment_wear": {"scanner": 3}},
+      "score": 10,
+      "success_message": {"en": "Airflow nominal, scrubber at 92% capacity.", "ar": "تدفق الهواء سليم، الفلتر عند 92%."}
+    },
+    {
+      "id": "check_power_bus",
+      "title": {"en": "Measure the power bus", "ar": "قيس لوحة الطاقة"},
+      "hint": {"en": "Power panel: measure bus voltage with the multimeter.", "ar": "لوحة الطاقة: قيس الجهد بالملتيميتر."},
+      "target": "power_panel",
+      "animation": "measure",
+      "duration_ms": 1600,
+      "requires": [{"type": "item", "id": "multimeter"}],
+      "effects": {"world": {"analog.power_bus_ok": true}, "resources": {"power": -1}, "equipment_wear": {"multimeter": 3}},
+      "score": 10,
+      "success_message": {"en": "Bus at 28.4 V – within tolerance.", "ar": "الجهد 28.4 فولت – داخل الحدود."}
+    },
+    {
+      "id": "check_water_loop",
+      "title": {"en": "Scan the water manifold", "ar": "امسح مجمع المياه"},
+      "hint": {"en": "Water manifold: a pressure drop hides somewhere in the loop.", "ar": "مجمع المياه: فيه هبوط ضغط مستخبي في الدورة."},
+      "target": "water_manifold",
+      "animation": "scan",
+      "duration_ms": 2000,
+      "requires": [{"type": "item", "id": "scanner"}],
+      "effects": {"world": {"analog.water_loop_checked": true, "leak_active": true}, "flags_set": ["leak.suspected"], "resources": {"power": -2}, "equipment_wear": {"scanner": 4}},
+      "score": 12,
+      "success_message": {"en": "Pressure anomaly detected – a water leak is active.", "ar": "تم رصد شذوذ في الضغط – فيه تسريب مياه نشط."},
+      "science_note": "Water loops are monitored by pressure and flow deltas; a slow leak shows up as a pressure trend long before a puddle does."
+    },
+    {
+      "id": "log_system_report",
+      "title": {"en": "Log the systems report", "ar": "سجل تقرير الأنظمة"},
+      "hint": {"en": "Data terminal: write your readings to the habitat log.", "ar": "محطة البيانات: اكتب قراءاتك في سجل القاعدة."},
+      "target": "data_terminal",
+      "animation": "read_terminal",
+      "duration_ms": 1200,
+      "requires": [{"type": "item", "id": "data_core"}],
+      "effects": {"flags_set": ["analog.survey_logged"], "world": {"analog.survey_logged": true}},
+      "score": 8,
+      "success_message": {"en": "Survey logged. Maintenance tasks unlocked.", "ar": "تم تسجيل الفحص. مهام الصيانة اتفتحت."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "check_water_loop",
+      "missing_any": ["scanner"],
+      "effects": {"resources": {"power": -1}},
+      "message": {"en": "You cannot certify a water loop by looking at it. Bring the scanner.", "ar": "مش هتعتمد دورة مياه بالنظر. هات جهاز المسح."},
+      "mistake_penalty": 3.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 4.0, "time_target_seconds": 360.0, "time_bonus_max": 8.0, "pass_score_pct": 55.0},
+  "completion": {
+    "effects": {"world": {"analog.survey_done": true}},
+    "unlocks": ["analog_water_leak", "analog_power_link", "analog_device_fault"],
+    "summary": {"en": "Survey complete: a live water leak, a power module to connect and a suspect device.", "ar": "الفحص خلص: تسريب مياه نشط، وحدة طاقة محتاجة توصيل، وجهاز مشكوك فيه."},
+    "continuity": [
+      {
+        "key": "survey:power",
+        "label": {"en": "Survey discipline → power reserve", "ar": "دقة الفحص ← احتياطي الطاقة"},
+        "kind": "resource",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 5, "reason": {"en": "Clean survey: habitat bus left balanced.", "ar": "فحص دقيق: شبكة القاعدة متوازنة."}},
+          {"min": 0, "value": -4, "reason": {"en": "Sloppy survey left loads unbalanced.", "ar": "فحص مهمل ترك الأحمال غير متوازنة."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Analog habitats", "ar": "قواعد التدريب المشابهة"},
+      "detail": {"en": "NASA uses analog missions (NEEMO, HERA, Desert RATS) to rehearse isolation, procedures and hardware failures before flight.", "ar": "ناسا بتستخدم مهام مشابهة (NEEMO وHERA وDesert RATS) للتدريب على العزلة والإجراءات وأعطال الأجهزة قبل الطيران."},
+      "source": "NASA – Analog Missions",
+      "url": "https://www.nasa.gov/analog-missions/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "ventilation_panel", "label": {"en": "Ventilation Panel", "ar": "لوحة التهوية"}, "kind": "device", "position": [-5, 0, -4], "interactions": ["check_ventilation"]},
+    {"id": "power_panel", "label": {"en": "Power Panel", "ar": "لوحة الطاقة"}, "kind": "device", "position": [5, 0, -4], "interactions": ["check_power_bus"]},
+    {"id": "water_manifold", "label": {"en": "Water Manifold", "ar": "مجمع المياه"}, "kind": "pipe", "position": [-3, 0, 5], "interactions": ["check_water_loop"]},
+    {"id": "data_terminal", "label": {"en": "Data Terminal", "ar": "محطة البيانات"}, "kind": "terminal", "position": [4, 0, 5], "interactions": ["log_system_report"]}
+  ],
+  "disclaimer": "Educational game simulation. Readings are invented for gameplay."
+}

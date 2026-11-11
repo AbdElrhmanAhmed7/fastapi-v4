@@ -1,0 +1,322 @@
+{
+  "id": "analog_comms_blackout",
+  "stage": 2,
+  "title": {
+    "en": "Communications Blackout",
+    "ar": "انقطاع الاتصالات"
+  },
+  "summary": {
+    "en": "Diagnose the dead link, realign the antenna and restore contact with control.",
+    "ar": "شخّص الاتصال المقطوع، اضبط الهوائي ورجّع التواصل مع مركز التحكم."
+  },
+  "environment": "earth_analog",
+  "estimated_minutes": 6,
+  "requires_missions": [
+    "analog_power_link"
+  ],
+  "briefing": [
+    {
+      "en": "No comms means no rescue. Treat it as an emergency, not an inconvenience.",
+      "ar": "مفيش اتصال يعني مفيش إنقاذ. اتعامل معاه كطوارئ مش إزعاج."
+    }
+  ],
+  "objectives": [
+    {
+      "id": "diagnose_link",
+      "title": {
+        "en": "Diagnose the link",
+        "ar": "شخّص الاتصال"
+      },
+      "hint": {
+        "en": "Measure the transceiver supply and signal path.",
+        "ar": "قيس تغذية جهاز الإرسال ومسار الإشارة."
+      },
+      "target": "comms_rack",
+      "animation": "measure",
+      "duration_ms": 1800,
+      "requires": [
+        {
+          "type": "item",
+          "id": "multimeter"
+        }
+      ],
+      "effects": {
+        "world": {
+          "comms.diagnosed": true
+        },
+        "resources": {
+          "power": -2
+        },
+        "equipment_wear": {
+          "multimeter": 3
+        }
+      },
+      "score": 12,
+      "success_message": {
+        "en": "Power is fine – the antenna is off-axis.",
+        "ar": "الطاقة سليمة – الهوائي خارج المحور."
+      }
+    },
+    {
+      "id": "fetch_antenna_kit",
+      "title": {
+        "en": "Collect the antenna kit",
+        "ar": "خد طقم الهوائي"
+      },
+      "hint": {
+        "en": "Stores: antenna alignment kit.",
+        "ar": "المخزن: طقم ضبط الهوائي."
+      },
+      "target": "stores_locker",
+      "animation": "pickup",
+      "duration_ms": 1200,
+      "require_previous": false,
+      "effects": {
+        "items": {
+          "antenna_kit": 1
+        }
+      },
+      "score": 6
+    },
+    {
+      "id": "realign_antenna",
+      "title": {
+        "en": "Realign the antenna",
+        "ar": "اضبط توجيه الهوائي"
+      },
+      "hint": {
+        "en": "Outside on the mast: fit the kit and peak the signal.",
+        "ar": "بره على الصاري: ركب الطقم واضبط أعلى إشارة."
+      },
+      "target": "antenna_mast",
+      "animation": "install",
+      "duration_ms": 3000,
+      "requires": [
+        {
+          "type": "item",
+          "id": "antenna_kit"
+        },
+        {
+          "type": "item",
+          "id": "wrench"
+        },
+        {
+          "type": "objective",
+          "id": "diagnose_link"
+        }
+      ],
+      "effects": {
+        "items": {
+          "antenna_kit": -1
+        },
+        "world": {
+          "comms.antenna_aligned": true
+        },
+        "equipment_wear": {
+          "wrench": 4
+        }
+      },
+      "score": 16
+    },
+    {
+      "id": "restore_link",
+      "title": {
+        "en": "Restore the link",
+        "ar": "رجّع الاتصال"
+      },
+      "hint": {
+        "en": "Power up the transceiver and lock the carrier.",
+        "ar": "شغّل جهاز الإرسال واقفل على الإشارة."
+      },
+      "target": "comms_rack",
+      "animation": "confirm",
+      "duration_ms": 1800,
+      "requires": [
+        {
+          "type": "world",
+          "path": "comms.antenna_aligned",
+          "op": "eq",
+          "value": true
+        }
+      ],
+      "effects": {
+        "world": {
+          "comms_online": true
+        },
+        "flags_set": [
+          "comms_online"
+        ],
+        "resources": {
+          "power": -3
+        }
+      },
+      "score": 16,
+      "success_message": {
+        "en": "Carrier locked. Control has you loud and clear.",
+        "ar": "تم قفل الإشارة. المركز بيسمعك بوضوح."
+      }
+    },
+    {
+      "id": "send_status_report",
+      "title": {
+        "en": "Send the status report",
+        "ar": "ابعت تقرير الحالة"
+      },
+      "hint": {
+        "en": "Report habitat status to mission control.",
+        "ar": "ابلغ مركز التحكم بحالة القاعدة."
+      },
+      "target": "comms_rack",
+      "animation": "read_terminal",
+      "duration_ms": 1400,
+      "requires": [
+        {
+          "type": "flag",
+          "id": "comms_online"
+        }
+      ],
+      "effects": {
+        "flags_set": [
+          "analog.status_sent"
+        ],
+        "readiness": 2.0
+      },
+      "score": 10
+    }
+  ],
+  "hazards": [
+    {
+      "action": "restore_link",
+      "missing_any": [
+        "comms.antenna_aligned"
+      ],
+      "effects": {
+        "resources": {
+          "power": -5
+        }
+      },
+      "message": {
+        "en": "Transmitting into a misaligned antenna wastes power and heats the amplifier.",
+        "ar": "الإرسال على هوائي غير مضبوط بيضيع طاقة ويسخن المضخم."
+      },
+      "mistake_penalty": 6.0
+    }
+  ],
+  "scoring": {
+    "mistake_penalty": 5.0,
+    "time_target_seconds": 330.0,
+    "time_bonus_max": 8.0,
+    "pass_score_pct": 55.0
+  },
+  "completion": {
+    "effects": {
+      "world": {
+        "analog.comms_ok": true
+      }
+    },
+    "unlocks": [
+      "analog_emergency"
+    ],
+    "summary": {
+      "en": "Communications restored and logged.",
+      "ar": "الاتصالات رجعت واتسجلت."
+    },
+    "continuity": [
+      {
+        "key": "comms:power",
+        "label": {
+          "en": "Comms recovery → power reserve",
+          "ar": "استعادة الاتصال ← احتياطي الطاقة"
+        },
+        "kind": "resource",
+        "metric": "score_pct",
+        "bands": [
+          {
+            "min": 85,
+            "value": 6,
+            "reason": {
+              "en": "Fast, clean recovery left the radio budget intact.",
+              "ar": "استعادة سريعة ونظيفة حافظت على ميزانية الطاقة."
+            }
+          },
+          {
+            "min": 0,
+            "value": -5,
+            "reason": {
+              "en": "Repeated blind transmissions drained the bus.",
+              "ar": "إرسال متكرر بدون ضبط استهلك الشبكة."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {
+        "en": "Deep-space links are directional",
+        "ar": "اتصالات الفضاء العميق اتجاهية"
+      },
+      "detail": {
+        "en": "NASA's Deep Space Network uses large steerable dishes; pointing accuracy and link margin decide whether a spacecraft can be heard at all.",
+        "ar": "شبكة الفضاء العميق لناسا بتستخدم أطباق كبيرة قابلة للتوجيه؛ دقة التوجيه وهامش الاتصال بيحددوا لو ممكن نسمع المركبة أصلًا."
+      },
+      "source": "NASA – Deep Space Network",
+      "url": "https://www.nasa.gov/communicating-with-missions/dsn/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {
+      "id": "comms_rack",
+      "label": {
+        "en": "Comms Rack",
+        "ar": "رف الاتصالات"
+      },
+      "kind": "device",
+      "position": [
+        2,
+        0,
+        -6
+      ],
+      "interactions": [
+        "diagnose_link",
+        "restore_link",
+        "send_status_report"
+      ]
+    },
+    {
+      "id": "antenna_mast",
+      "label": {
+        "en": "Antenna Mast",
+        "ar": "صاري الهوائي"
+      },
+      "kind": "structure",
+      "position": [
+        14,
+        0,
+        -8
+      ],
+      "interactions": [
+        "realign_antenna"
+      ]
+    },
+    {
+      "id": "stores_locker",
+      "label": {
+        "en": "Stores Locker",
+        "ar": "خزانة المخزن"
+      },
+      "kind": "locker",
+      "position": [
+        8,
+        0,
+        2
+      ],
+      "interactions": [
+        "fetch_antenna_kit"
+      ]
+    }
+  ],
+  "disclaimer": "Educational game simulation. Link budgets are simplified."
+}

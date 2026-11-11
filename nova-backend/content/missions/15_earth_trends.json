@@ -1,0 +1,131 @@
+{
+  "id": "earth_trends",
+  "stage": 8,
+  "title": {"en": "Earth Trends – Observation Station", "ar": "تغيرات الأرض – محطة الرصد"},
+  "summary": {"en": "Pick a region, enable a data layer, compare two periods and publish the change report.", "ar": "اختار منطقة، شغّل طبقة بيانات، قارن فترتين وانشر تقرير التغير."},
+  "environment": "earth_observation",
+  "estimated_minutes": 8,
+  "requires_missions": ["martian_guide", "lunar_landing"],
+  "briefing": [
+    {"en": "Studying other planets is how we learn to read our own.", "ar": "دراسة الكواكب التانية بتعلمنا نقرا كوكبنا."},
+    {"en": "Every layer states its NASA product and whether the numbers are live or simulated.", "ar": "كل طبقة بتوضح منتج ناسا وهل الأرقام حقيقية ولا محاكاة."}
+  ],
+  "objectives": [
+    {
+      "id": "enter_observation_station",
+      "title": {"en": "Enter the observation station", "ar": "ادخل محطة الرصد"},
+      "hint": {"en": "The globe wall lights up as you approach.", "ar": "حائط الكرة الأرضية بينور وانت بتقرب."},
+      "target": "globe_wall",
+      "animation": "walk_to",
+      "duration_ms": 1400,
+      "effects": {"world": {"earth.at_station": true}, "resources": {"power": -1}},
+      "score": 6
+    },
+    {
+      "id": "select_region",
+      "title": {"en": "Select a region", "ar": "اختار منطقة"},
+      "hint": {"en": "Choose one of the six study regions.", "ar": "اختار واحدة من ست مناطق دراسية."},
+      "target": "region_console",
+      "animation": "read_terminal",
+      "duration_ms": 1400,
+      "requires": [{"type": "objective", "id": "enter_observation_station"}],
+      "payload": [{"name": "region", "type": "string", "choices": ["nile_delta", "amazon_basin", "sahel", "ganges_plain", "great_barrier", "greenland_margin"], "required": true, "label": {"en": "Region", "ar": "المنطقة"}}],
+      "effects": {"world": {"earth.region": "{{payload.region}}"}},
+      "score": 10
+    },
+    {
+      "id": "enable_layer",
+      "title": {"en": "Enable a data layer", "ar": "شغّل طبقة بيانات"},
+      "hint": {"en": "NDVI, land temperature, precipitation, aerosol or night lights.", "ar": "غطاء نباتي، حرارة سطح، أمطار، هباء جوي أو أضواء ليلية."},
+      "target": "layer_console",
+      "animation": "confirm",
+      "duration_ms": 1400,
+      "requires": [{"type": "objective", "id": "select_region"}],
+      "payload": [{"name": "layer", "type": "string", "choices": ["ndvi", "lst", "precipitation", "aerosol", "night_lights"], "required": true, "label": {"en": "Layer", "ar": "الطبقة"}}],
+      "effects": {"world": {"earth.layer": "{{payload.layer}}"}, "resources": {"power": -2}},
+      "score": 12
+    },
+    {
+      "id": "compare_periods",
+      "title": {"en": "Compare two periods", "ar": "قارن فترتين"},
+      "hint": {"en": "The station computes per-cell deltas, hotspots and a verdict.", "ar": "المحطة بتحسب فروق كل خلية والبؤر الساخنة والحكم."},
+      "target": "analysis_console",
+      "animation": "analyse",
+      "duration_ms": 2600,
+      "requires": [{"type": "objective", "id": "enable_layer"}],
+      "payload": [
+        {"name": "before", "type": "string", "choices": ["2001-2005", "2006-2010", "2011-2015", "2016-2020", "2021-2025"], "default": "2001-2005", "label": {"en": "Baseline period", "ar": "فترة الأساس"}},
+        {"name": "after", "type": "string", "choices": ["2001-2005", "2006-2010", "2011-2015", "2016-2020", "2021-2025"], "default": "2021-2025", "label": {"en": "Comparison period", "ar": "فترة المقارنة"}}
+      ],
+      "effects": {"world": {"earth.compared": true}, "resources": {"power": -3}},
+      "score": 18
+    },
+    {
+      "id": "interpret_change",
+      "title": {"en": "Interpret the change", "ar": "فسّر التغير"},
+      "hint": {"en": "Read the narrative: direction, magnitude and how many cells degraded.", "ar": "اقرا الملخص: الاتجاه والمقدار وعدد الخلايا المتدهورة."},
+      "target": "analysis_console",
+      "animation": "read_terminal",
+      "duration_ms": 1800,
+      "requires": [{"type": "world", "path": "earth.compared", "op": "eq", "value": true}],
+      "effects": {"flags_set": ["earth_interpreted"]},
+      "score": 12
+    },
+    {
+      "id": "save_report",
+      "title": {"en": "Save the observation report", "ar": "احفظ تقرير الرصد"},
+      "hint": {"en": "Publish it to the mission science archive.", "ar": "انشره في أرشيف علوم المهمة."},
+      "target": "report_console",
+      "animation": "confirm",
+      "duration_ms": 1800,
+      "requires": [{"type": "flag", "id": "earth_interpreted"}, {"type": "item", "id": "data_core"}],
+      "effects": {"world": {"earth.report_saved": true}, "flags_set": ["earth_report_saved"], "readiness": 4.0},
+      "score": 14,
+      "success_message": {"en": "Report archived with provenance. Campaign complete.", "ar": "التقرير اتأرشف بالمصدر. الحملة اكتملت."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "save_report",
+      "missing_any": ["earth_interpreted"],
+      "effects": {"resources": {"power": -2}},
+      "message": {"en": "An uninterpreted chart is not a report. Read the analysis first.", "ar": "الرسم بدون تفسير مش تقرير. اقرا التحليل الأول."},
+      "mistake_penalty": 5.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 4.0, "time_target_seconds": 420.0, "time_bonus_max": 8.0, "pass_score_pct": 60.0},
+  "completion": {
+    "effects": {"flags_set": ["campaign_complete"], "world": {"campaign.complete": true}},
+    "unlocks": [],
+    "summary": {"en": "NOVA campaign complete: Explore. Experience. Execute.", "ar": "حملة نوفا اكتملت: استكشف. جرّب. نفّذ."},
+    "continuity": [
+      {
+        "key": "earth_readiness",
+        "label": {"en": "Science reporting → final readiness", "ar": "التقارير العلمية ← الجاهزية النهائية"},
+        "kind": "readiness",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 8, "reason": {"en": "Publication-quality analysis.", "ar": "تحليل بجودة النشر."}},
+          {"min": 0, "value": -3, "reason": {"en": "Analysis needs more rigour.", "ar": "التحليل محتاج دقة أكتر."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Reading Earth from orbit", "ar": "قراءة الأرض من المدار"},
+      "detail": {"en": "MODIS NDVI (MOD13Q1) tracks vegetation greenness, MODIS land surface temperature (MOD11) tracks heat, and GPM IMERG tracks precipitation. NASA POWER serves monthly aggregates of these climate variables without an API key.", "ar": "مؤشر MODIS NDVI بيتابع خضرة الغطاء النباتي، وحرارة سطح الأرض MOD11 بتتابع الحرارة، وGPM IMERG بيتابع الأمطار. خدمة NASA POWER بتوفر تجميعات شهرية للمتغيرات دي بدون مفتاح API."},
+      "source": "NASA – MODIS / GPM / POWER",
+      "url": "https://power.larc.nasa.gov/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "globe_wall", "label": {"en": "Globe Wall", "ar": "حائط الكرة الأرضية"}, "kind": "display", "position": [0, 2, -8], "interactions": ["enter_observation_station"]},
+    {"id": "region_console", "label": {"en": "Region Console", "ar": "كونسول المناطق"}, "kind": "terminal", "position": [-4, 0, -6], "interactions": ["select_region"]},
+    {"id": "layer_console", "label": {"en": "Layer Console", "ar": "كونسول الطبقات"}, "kind": "terminal", "position": [4, 0, -6], "interactions": ["enable_layer"]},
+    {"id": "analysis_console", "label": {"en": "Analysis Console", "ar": "كونسول التحليل"}, "kind": "terminal", "position": [0, 0, -4], "interactions": ["compare_periods", "interpret_change"]},
+    {"id": "report_console", "label": {"en": "Report Console", "ar": "كونسول التقارير"}, "kind": "terminal", "position": [0, 0, -2], "interactions": ["save_report"]}
+  ],
+  "disclaimer": "Educational analysis. Bundled grids are clearly labelled 'simulated'; live NASA POWER data is labelled 'live'."
+}

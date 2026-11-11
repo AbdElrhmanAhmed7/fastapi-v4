@@ -1,0 +1,171 @@
+{
+  "id": "training_prep",
+  "stage": 1,
+  "title": {"en": "Mission Preparation", "ar": "تجهيز المهمة"},
+  "summary": {"en": "Walk the training facility, visit every station and leave with a flight-ready loadout.", "ar": "اتحرك داخل غرفة التجهيز، زور كل محطة واخرج بمعدات جاهزة للمهمة."},
+  "environment": "training_facility",
+  "estimated_minutes": 6,
+  "requires_missions": [],
+  "briefing": [
+    {"en": "Explore. Experience. Execute. Nothing here is a menu: walk to each station and press E.", "ar": "استكشف. جرّب. نفّذ. مفيش قوائم هنا: اتحرك لكل محطة واضغط E."},
+    {"en": "You cannot leave the facility without oxygen, repair tools and a scanner.", "ar": "مش هتقدر تسيب المنشأة من غير أكسجين وأدوات إصلاح وجهاز مسح."},
+    {"en": "How well you prepare decides the resources you start Mars with.", "ar": "جودة تجهيزك بتحدد الموارد اللي هتبدأ بيها على المريخ."}
+  ],
+  "objectives": [
+    {
+      "id": "review_brief",
+      "title": {"en": "Review the mission brief", "ar": "راجع أهداف المهمة"},
+      "hint": {"en": "Mission Station: read the objectives, then confirm.", "ar": "محطة المهمة: اقرأ الأهداف وبعدين أكّد."},
+      "target": "mission_station",
+      "animation": "read_terminal",
+      "duration_ms": 1400,
+      "require_previous": false,
+      "effects": {"flags_set": ["prep.briefed"]},
+      "score": 8,
+      "success_message": {"en": "Mission brief accepted. Stations unlocked.", "ar": "تم قبول أهداف المهمة. المحطات اتفتحت."}
+    },
+    {
+      "id": "collect_oxygen",
+      "title": {"en": "Collect the oxygen cylinder", "ar": "استلم أسطوانة الأكسجين"},
+      "hint": {"en": "Oxygen Station: pick up a cylinder and top up the suit.", "ar": "محطة الأكسجين: خد أسطوانة واملا البدلة."},
+      "target": "oxygen_station",
+      "animation": "pickup",
+      "duration_ms": 1200,
+      "require_previous": false,
+      "requires": [{"type": "flag", "id": "prep.briefed", "hint": {"en": "Read the mission brief first.", "ar": "اقرأ أهداف المهمة الأول."}}],
+      "effects": {"items": {"oxygen_tank": 1}, "resources": {"oxygen": 20}, "flags_set": ["prep.oxygen"]},
+      "score": 10,
+      "success_message": {"en": "Oxygen cylinder stowed (+20 O2).", "ar": "تم تخزين أسطوانة الأكسجين (+20 أكسجين)."}
+    },
+    {
+      "id": "take_repair_tools",
+      "title": {"en": "Take the repair kit", "ar": "خد أدوات الإصلاح"},
+      "hint": {"en": "Equipment Station: wrench, repair kits, maintenance kit, power cell.", "ar": "محطة المعدات: مفتاح، أطقم إصلاح، طقم صيانة، خلية طاقة."},
+      "target": "equipment_station",
+      "animation": "pickup",
+      "duration_ms": 1500,
+      "require_previous": false,
+      "requires": [{"type": "flag", "id": "prep.briefed"}],
+      "effects": {"items": {"wrench": 1, "repair_kit": 2, "maintenance_kit": 1, "power_cell": 1}, "flags_set": ["prep.tools"]},
+      "score": 10,
+      "success_message": {"en": "Repair loadout collected.", "ar": "تم استلام معدات الإصلاح."}
+    },
+    {
+      "id": "take_scanner",
+      "title": {"en": "Take scanner, multimeter and data core", "ar": "خد جهاز المسح والملتيميتر ووحدة البيانات"},
+      "hint": {"en": "Equipment Station: diagnostics rack.", "ar": "محطة المعدات: رف أجهزة الفحص."},
+      "target": "diagnostics_rack",
+      "animation": "pickup",
+      "duration_ms": 1500,
+      "require_previous": false,
+      "requires": [{"type": "flag", "id": "prep.briefed"}],
+      "effects": {"items": {"scanner": 1, "multimeter": 1, "data_core": 1}, "flags_set": ["prep.scanner"]},
+      "score": 10,
+      "success_message": {"en": "Diagnostics tools collected.", "ar": "تم استلام أجهزة الفحص."}
+    },
+    {
+      "id": "inspect_rover",
+      "title": {"en": "Inspect and ready the rover", "ar": "افحص العربة وجهزها"},
+      "hint": {"en": "Rover Station: run a full check (tyres, battery, suspension).", "ar": "محطة العربة: اعمل فحص كامل (الإطارات، البطارية، التعليق)."},
+      "target": "rover_station",
+      "animation": "inspect",
+      "duration_ms": 2200,
+      "require_previous": false,
+      "requires": [{"type": "flag", "id": "prep.briefed"}],
+      "payload": [
+        {"name": "check_mode", "type": "string", "choices": ["full", "quick"], "default": "full", "label": {"en": "Check depth", "ar": "عمق الفحص"}}
+      ],
+      "effects": {"items": {"rover_transponder": 1}, "world": {"rover.checked": true, "rover.check_mode": "{{payload.check_mode}}"}, "flags_set": ["prep.rover"], "readiness": 2.0},
+      "score": 10,
+      "success_message": {"en": "Rover checked and transponder installed.", "ar": "تم فحص العربة وتركيب جهاز الإرسال."}
+    },
+    {
+      "id": "suit_check",
+      "title": {"en": "Run the suit integrity check", "ar": "اعمل فحص سلامة البدلة"},
+      "hint": {"en": "Suit Locker: seal test and CO2 filter check.", "ar": "خزانة البدلة: اختبار الإحكام وفحص فلتر ثاني أكسيد الكربون."},
+      "target": "suit_locker",
+      "animation": "suit_check",
+      "duration_ms": 1800,
+      "require_previous": false,
+      "requires": [{"type": "flag", "id": "prep.oxygen"}],
+      "effects": {"world": {"suit.checked": true}, "flags_set": ["prep.suit"], "resources": {"oxygen": 5}},
+      "score": 8,
+      "success_message": {"en": "Suit sealed. CO2 filter nominal.", "ar": "البدلة محكمة. فلتر ثاني أكسيد الكربون سليم."}
+    },
+    {
+      "id": "confirm_readiness",
+      "title": {"en": "Sign off mission readiness", "ar": "أكّد جاهزية المهمة"},
+      "hint": {"en": "Mission Station: only possible with a complete loadout.", "ar": "محطة المهمة: مش هتنفع غير بمعدات كاملة."},
+      "target": "mission_station",
+      "animation": "confirm",
+      "duration_ms": 1200,
+      "requires": [
+        {"type": "flag", "id": "prep.oxygen"},
+        {"type": "flag", "id": "prep.tools"},
+        {"type": "flag", "id": "prep.scanner"},
+        {"type": "flag", "id": "prep.rover"},
+        {"type": "flag", "id": "prep.suit"}
+      ],
+      "effects": {"flags_set": ["prep.complete"], "readiness": 5.0},
+      "score": 12,
+      "success_message": {"en": "You are cleared for Earth Analog training.", "ar": "تم التصريح لك ببدء التدريب الأرضي."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "confirm_readiness",
+      "missing_any": ["prep.oxygen", "prep.tools", "prep.scanner", "prep.rover", "prep.suit"],
+      "effects": {"readiness": -3.0},
+      "message": {"en": "Flight director refuses the sign-off: your loadout is incomplete.", "ar": "مدير المهمة رفض التأكيد: معداتك ناقصة."},
+      "mistake_penalty": 5.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 4.0, "time_target_seconds": 300.0, "time_bonus_max": 8.0, "pass_score_pct": 60.0, "efficiency_bonus": 4.0},
+  "completion": {
+    "effects": {"resources": {"power": 10}, "world": {"training.prep_done": true}},
+    "unlocks": ["analog_systems_check"],
+    "summary": {"en": "Preparation complete. Loadout quality now feeds the Mission Continuity System.", "ar": "التجهيز خلص. جودة المعدات دلوقتي بتأثر على المراحل الجاية."},
+    "continuity": [
+      {
+        "key": "prep:power",
+        "label": {"en": "Preparation quality → starting power", "ar": "جودة التجهيز ← الطاقة الابتدائية"},
+        "kind": "resource",
+        "metric": "objectives_pct",
+        "bands": [
+          {"min": 100, "value": 8, "reason": {"en": "Every station visited: full power reserve granted.", "ar": "زرت كل المحطات: احتياطي طاقة كامل."}},
+          {"min": 60, "value": 3, "reason": {"en": "Partial preparation: small power reserve.", "ar": "تجهيز جزئي: احتياطي طاقة صغير."}},
+          {"min": 0, "value": -6, "reason": {"en": "Poor preparation: power reserve reduced.", "ar": "تجهيز ضعيف: احتياطي الطاقة اتخفض."}}
+        ]
+      },
+      {
+        "key": "prep_readiness",
+        "label": {"en": "Preparation grade → readiness", "ar": "تقييم التجهيز ← الجاهزية"},
+        "kind": "readiness",
+        "metric": "score_pct",
+        "bands": [
+          {"min": 90, "value": 8, "reason": {"en": "Flawless preparation.", "ar": "تجهيز ممتاز."}},
+          {"min": 70, "value": 4, "reason": {"en": "Solid preparation.", "ar": "تجهيز جيد."}},
+          {"min": 0, "value": -5, "reason": {"en": "Rushed preparation.", "ar": "تجهيز متسرع."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "EVA preparation is a checklist, not a formality", "ar": "التحضير للخروج الفضائي قائمة إجراءات مش شكلية"},
+      "detail": {"en": "NASA astronauts pre-breathe and verify suit, consumables and tools before every EVA; missing consumables shorten the usable EVA time.", "ar": "رواد ناسا بيعملوا تنفس مسبق وفحص للبدلة والمستهلكات والأدوات قبل كل خروج؛ نقص المستهلكات بيقلل زمن الخروج المتاح."},
+      "source": "NASA – Extravehicular Activity (EVA) operations",
+      "url": "https://www.nasa.gov/missions/station/spacewalks/",
+      "simulated": true
+    }
+  ],
+  "world_objects": [
+    {"id": "mission_station", "label": {"en": "Mission Station", "ar": "محطة المهمة"}, "kind": "terminal", "position": [0, 0, -6], "interactions": ["review_brief", "confirm_readiness"], "prompt": {"en": "E – Mission brief / readiness", "ar": "E – أهداف المهمة / الجاهزية"}},
+    {"id": "oxygen_station", "label": {"en": "Oxygen Station", "ar": "محطة الأكسجين"}, "kind": "dispenser", "position": [-6, 0, -2], "interactions": ["collect_oxygen"]},
+    {"id": "equipment_station", "label": {"en": "Equipment Station", "ar": "محطة المعدات"}, "kind": "locker", "position": [6, 0, -2], "interactions": ["take_repair_tools"]},
+    {"id": "diagnostics_rack", "label": {"en": "Diagnostics Rack", "ar": "رف أجهزة الفحص"}, "kind": "locker", "position": [6, 0, 3], "interactions": ["take_scanner"]},
+    {"id": "rover_station", "label": {"en": "Rover Station", "ar": "محطة العربة"}, "kind": "vehicle", "position": [-8, 0, 6], "interactions": ["inspect_rover"]},
+    {"id": "suit_locker", "label": {"en": "Suit Locker", "ar": "خزانة البدلة"}, "kind": "locker", "position": [2, 0, 6], "interactions": ["suit_check"]}
+  ],
+  "disclaimer": "Educational game simulation. Resource numbers are simplified for gameplay, not real mission planning data."
+}

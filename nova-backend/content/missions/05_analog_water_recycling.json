@@ -1,0 +1,131 @@
+{
+  "id": "analog_water_recycling",
+  "stage": 2,
+  "title": {"en": "Start the Water Recycler", "ar": "تشغيل إعادة تدوير المياه"},
+  "summary": {"en": "Install a fresh filter, prime the pump and bring the recycling loop online.", "ar": "ركب فلتر جديد، حضّر المضخة وشغّل دورة إعادة التدوير."},
+  "environment": "earth_analog",
+  "estimated_minutes": 6,
+  "requires_missions": ["analog_water_leak", "analog_power_link"],
+  "briefing": [
+    {"en": "A closed loop turns yesterday's water into tomorrow's drinking water.", "ar": "الدورة المغلقة بتحول مياه امبارح لمياه شرب بكرة."},
+    {"en": "The recycler needs power and a primed pump before it will start.", "ar": "جهاز التدوير محتاج طاقة ومضخة محضرة قبل ما يشتغل."}
+  ],
+  "objectives": [
+    {
+      "id": "inspect_recycler",
+      "title": {"en": "Inspect the recycler", "ar": "افحص جهاز إعادة التدوير"},
+      "hint": {"en": "Scan the filter housing and the brine tank.", "ar": "امسح بيت الفلتر وخزان المحلول."},
+      "target": "recycler_unit",
+      "animation": "scan",
+      "duration_ms": 1800,
+      "requires": [{"type": "item", "id": "scanner"}],
+      "effects": {"world": {"recycler.inspected": true}, "resources": {"power": -2}, "equipment_wear": {"scanner": 3}},
+      "score": 10
+    },
+    {
+      "id": "take_filter",
+      "title": {"en": "Take a filter cartridge", "ar": "خد خرطوشة فلتر"},
+      "hint": {"en": "Stores: consumables shelf.", "ar": "المخزن: رف المستهلكات."},
+      "target": "stores_locker",
+      "animation": "pickup",
+      "duration_ms": 1200,
+      "require_previous": false,
+      "effects": {"items": {"filter_cartridge": 1}},
+      "score": 6
+    },
+    {
+      "id": "install_filter",
+      "title": {"en": "Install the fresh filter", "ar": "ركب الفلتر الجديد"},
+      "hint": {"en": "Swap the saturated cartridge for a fresh one.", "ar": "بدل الخرطوشة المشبعة بواحدة جديدة."},
+      "target": "filter_housing",
+      "animation": "install",
+      "duration_ms": 2200,
+      "requires": [{"type": "item", "id": "filter_cartridge"}, {"type": "objective", "id": "inspect_recycler"}],
+      "effects": {"items": {"filter_cartridge": -1}, "flags_set": ["water_filter_fresh"], "world": {"recycler.filter_fresh": true}},
+      "score": 14
+    },
+    {
+      "id": "prime_pump",
+      "title": {"en": "Prime the pump", "ar": "حضّر المضخة"},
+      "hint": {"en": "Bleed air from the line – needs the habitat bus online.", "ar": "طلّع الهواء من الخط – محتاج شبكة القاعدة شغالة."},
+      "target": "recycler_pump",
+      "animation": "repair",
+      "duration_ms": 2400,
+      "requires": [
+        {"type": "item", "id": "wrench"},
+        {"type": "world", "path": "power.online", "op": "eq", "value": true, "hint": {"en": "Energise the habitat bus first.", "ar": "شغّل شبكة القاعدة الأول."}}
+      ],
+      "effects": {"world": {"recycler.primed": true}, "resources": {"power": -4}, "equipment_wear": {"wrench": 4}},
+      "score": 12
+    },
+    {
+      "id": "start_recycling",
+      "title": {"en": "Start the recycling loop", "ar": "شغّل دورة إعادة التدوير"},
+      "hint": {"en": "Press START on the recycler control panel.", "ar": "اضغط تشغيل على لوحة الجهاز."},
+      "target": "recycler_unit",
+      "animation": "confirm",
+      "duration_ms": 2000,
+      "requires": [{"type": "world", "path": "recycler.primed", "op": "eq", "value": true}],
+      "effects": {"world": {"recycler.online": true}, "flags_set": ["recycler_online"], "resources": {"water": 25, "power": -6}},
+      "score": 18,
+      "success_message": {"en": "Recycler online: +25 L recovered water.", "ar": "الجهاز شغال: +25 لتر مياه مسترجعة."}
+    },
+    {
+      "id": "verify_quality",
+      "title": {"en": "Verify water quality", "ar": "اتأكد من جودة المياه"},
+      "hint": {"en": "Scan conductivity and microbial indicator.", "ar": "امسح التوصيلية والمؤشر الميكروبي."},
+      "target": "quality_probe",
+      "animation": "scan",
+      "duration_ms": 1600,
+      "requires": [{"type": "item", "id": "scanner"}, {"type": "objective", "id": "start_recycling"}],
+      "effects": {"world": {"recycler.quality_ok": true}, "flags_set": ["water_quality_ok"], "resources": {"power": -1}, "equipment_wear": {"scanner": 2}},
+      "score": 10,
+      "success_message": {"en": "Water within potable limits.", "ar": "المياه داخل حدود الصلاحية للشرب."}
+    }
+  ],
+  "hazards": [
+    {
+      "action": "start_recycling",
+      "missing_any": ["recycler.primed"],
+      "effects": {"resources": {"water": -10, "power": -3}},
+      "message": {"en": "The pump ran dry and dumped a batch. Prime it first.", "ar": "المضخة اشتغلت فاضية وصرفت دفعة. حضّرها الأول."},
+      "mistake_penalty": 7.0
+    }
+  ],
+  "scoring": {"mistake_penalty": 5.0, "time_target_seconds": 360.0, "time_bonus_max": 8.0, "pass_score_pct": 55.0},
+  "completion": {
+    "effects": {"world": {"analog.recycling_ok": true}},
+    "unlocks": ["analog_emergency"],
+    "summary": {"en": "Closed water loop running. Efficiency carries to Mars.", "ar": "دورة المياه المغلقة شغالة. الكفاءة هتنتقل للمريخ."},
+    "continuity": [
+      {
+        "key": "recycling:water",
+        "label": {"en": "Recycling efficiency → Mars water", "ar": "كفاءة التدوير ← مياه المريخ"},
+        "kind": "resource",
+        "metric": "resource_pct:water",
+        "bands": [
+          {"min": 80, "value": 12, "reason": {"en": "Tanks nearly full at handover.", "ar": "الخزانات شبه مليانة وقت التسليم."}},
+          {"min": 50, "value": 5, "reason": {"en": "Reasonable water reserve at handover.", "ar": "احتياطي مياه مقبول وقت التسليم."}},
+          {"min": 0, "value": -10, "reason": {"en": "Low tanks at handover: Mars starts dry.", "ar": "خزانات منخفضة وقت التسليم: المريخ هيبدأ جاف."}}
+        ]
+      }
+    ]
+  },
+  "science_notes": [
+    {
+      "topic": {"en": "Closing the water loop", "ar": "إغلاق دورة المياه"},
+      "detail": {"en": "The ISS Water Recovery System distills urine and processes cabin condensate; NASA has demonstrated recovering about 98% of water aboard the station.", "ar": "نظام استرجاع المياه على المحطة بيقطر البول ويعالج تكثيف المقصورة؛ ناسا أثبتت استرجاع حوالي 98% من المياه على المحطة."},
+      "source": "NASA – Water Recovery System / ECLSS announcement (2023)",
+      "url": "https://www.nasa.gov/missions/station/nasa-achieves-water-recovery-milestone-on-international-space-station/",
+      "simulated": false
+    }
+  ],
+  "world_objects": [
+    {"id": "recycler_unit", "label": {"en": "Water Recycler", "ar": "جهاز إعادة التدوير"}, "kind": "machine", "position": [-6, 0, 6], "interactions": ["inspect_recycler", "start_recycling"]},
+    {"id": "filter_housing", "label": {"en": "Filter Housing", "ar": "بيت الفلتر"}, "kind": "device", "position": [-6.8, 1.0, 6], "interactions": ["install_filter"]},
+    {"id": "recycler_pump", "label": {"en": "Recycler Pump", "ar": "مضخة التدوير"}, "kind": "machine", "position": [-6, 0.3, 7], "interactions": ["prime_pump"]},
+    {"id": "quality_probe", "label": {"en": "Quality Probe", "ar": "مسبار الجودة"}, "kind": "device", "position": [-5, 0.9, 6.5], "interactions": ["verify_quality"]},
+    {"id": "stores_locker", "label": {"en": "Stores Locker", "ar": "خزانة المخزن"}, "kind": "locker", "position": [8, 0, 2], "interactions": ["take_filter"]}
+  ],
+  "disclaimer": "Educational game simulation. Recovery rates are simplified."
+}
